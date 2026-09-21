@@ -1,0 +1,43 @@
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fd6281;
+}
+
+.frame {
+  width: min(92vw, 560px);
+  aspect-ratio: 657 / 492;  /* matches luv.jpg's actual dimensions */
+  overflow: hidden;
+  zoom: 0.9;
+}
+
+p {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  text-align: justify;
+
+  font-size: 7px;
+  line-height: 7px;
+  letter-spacing: 0.3px;
+  font-weight: 700;
+
+  background-image: linear-gradient(#ff8fb3, #ff8fb3), url(./luv.jpg);
+  background-blend-mode: color;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(1.35);
+
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: rgba(255,255,255,0);
+  -webkit-text-fill-color: rgba(255,255,255,0);
+}
