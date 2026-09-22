@@ -4,27 +4,66 @@ document.getElementById('txt').textContent = line.repeat(40);
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ---------- "Sharlene" pins, shrinks, and rises to a fixed spot near the top ----------
-gsap.set(".hero-text", { xPercent: -50, yPercent: -50 });
+// ---------- Page-load entrance: headline lines rise up, "Sharlene" fades in ----------
+const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-gsap.timeline({
+tl.to(".title-inner", {
+  y: 0,
+  duration: 1.1,
+  stagger: 0.08,
+  ease: "power4.out",
+}, 0.1)
+.to(".hero-text", {
+  opacity: 1,
+  duration: 1,
+}, 0.6);
+
+
+tl.to(".title-inner", {
+  y: 0,
+  duration: 1.1,
+  stagger: 0.08,
+  ease: "power4.out",
+}, 0.1)
+.to(".hero-text", {
+  opacity: 1,
+  duration: 1,
+}, 0.6)
+.to(".swoosh", {                 // NEW — the arc "draws in" right after Sharlene appears
+  scaleX: 1,
+  duration: 0.6,
+  ease: "power2.out",
+}, 1.1);
+
+
+// ---------- Scroll fade-away: hero content drifts and fades as you scroll past it ----------
+gsap.to(".hero-left", {
+  y: 60,
+  opacity: 0.4,
+  ease: "none",
   scrollTrigger: {
     trigger: ".hero",
     start: "top top",
-    end: "+=100%",
-    scrub: true,
-    pin: true,
+    end: "bottom top",
+    scrub: 1,
   }
-})
-.to(".hero-text", {
-  top: "8vh",
-  yPercent: -50,
-  scale: 0.65,
-  ease: "none",
 });
 
+gsap.to(".hero-right", {
+  y: 100,
+  scale: 0.92,
+  opacity: 0.4,
+  ease: "none",
+  scrollTrigger: {
+    trigger: ".hero",
+    start: "top top",
+    end: "bottom top",
+    scrub: 1,
+  }
+});
+
+
 // ---------- Wave divider: drifts at a different rate than the page scroll ----------
-// this is what makes it feel like a separate depth layer rather than static decoration
 gsap.to(".wave-divider", {
   yPercent: -25,
   ease: "none",

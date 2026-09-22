@@ -1,39 +1,99 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  background: #ffb5cd;   /* was #ff8fb3 — now matches .portrait-section, so any gap is invisible */
+  background: #ffb5cd;
   overflow-x: hidden;
 }
 
-/* ---------- Hero: "Sharlene" ---------- */
+/* ---------- Hero: two-column layout ---------- */
 
 .hero {
-  height: 100vh;
-  width: 100%;
-  background: #e0567e;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 40px;
+  min-height: 100vh;
+  padding: 40px 56px;
+  background: #f6f3eb;
   position: relative;
+}
+
+/* -- Left: headline, styled exactly like the reference site's .hero-title -- */
+
+.hero-title {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  font-size: clamp(48px, 5.8vw, 84px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: #0f0f0f;
+}
+
+.title-line {
+  display: block;
   overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+.title-inner {
+  display: inline-block;
+  will-change: transform;
+  transform: translateY(110%);  /* starting position for the entrance animation */
+}
+
+/* -- Right: "Sharlene", where the constellation diagram used to sit -- */
+
+.hero-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sharlene-wrap {
+  position: relative;
+  display: inline-block;   /* shrinks tightly around just the word */
 }
 
 .hero-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  position: relative;
+  z-index: 1;
   font-family: "WindSong", cursive;
   font-weight: 500;
-  font-size: clamp(2.5rem, 8vw, 6rem);
+  font-size: clamp(3rem, 9vw, 7rem);
   letter-spacing: 0.02em;
-  color: #f5f1ea;
-  will-change: transform, top;
+  color: #000000;
+  opacity: 0;
 }
 
-/* ---------- Wave divider: blends hero (#ff8fb3) into portrait section (#ffb5cd) ---------- */
+.swoosh {
+  position: absolute;
+  left: 50%;
+  bottom: 0.05em;
+  translate: -50% 0;
+  width: 100%;
+  height: 1em;              /* was 0.6em — needs more vertical room to show the curve */
+  z-index: 0;
+  pointer-events: none;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+
+@media (max-width: 1100px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px 32px;
+  }
+}
+
+/* ---------- Wave divider ---------- */
 
 .wave-divider {
   position: relative;
   width: 100%;
-  height: 36vh;       /* was 22vh — taller band shows more of the amplified curve */
-  margin-top: -28vh;  /* was -9vh — scaled to keep the same overlap into the hero */
+  height: 22vh;
+  margin-top: -9vh;
   z-index: 2;
   pointer-events: none;
   overflow: hidden;
@@ -43,9 +103,10 @@ html, body {
   position: absolute;
   inset: 0;
   width: 100%;
-  height: calc(100% + 8px);  /* overshoot the container so the risky bottom edge gets clipped, not shown */
+  height: 100%;
   display: block;
 }
+
 /* ---------- Portrait section ---------- */
 
 .portrait-section {
