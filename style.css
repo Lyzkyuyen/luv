@@ -18,7 +18,7 @@ html, body {
   position: relative;
 }
 
-/* -- Left: headline, styled exactly like the reference site's .hero-title -- */
+/* -- Left: headline -- */
 
 .hero-title {
   font-family: "Plus Jakarta Sans", sans-serif;
@@ -41,7 +41,7 @@ html, body {
   transform: translateY(110%);  /* starting position for the entrance animation */
 }
 
-/* -- Right: "Sharlene", where the constellation diagram used to sit -- */
+/* -- Right: "Sharlene" -- */
 
 .hero-right {
   display: flex;
@@ -71,7 +71,7 @@ html, body {
   bottom: 0.05em;
   translate: -50% 0;
   width: 100%;
-  height: 1em;              /* was 0.6em — needs more vertical room to show the curve */
+  height: 1em;
   z-index: 0;
   pointer-events: none;
   transform-origin: left center;
@@ -94,6 +94,7 @@ html, body {
   width: 100%;
   height: 22vh;
   margin-top: -9vh;
+  margin-bottom: -2px;
   z-index: 2;
   pointer-events: none;
   overflow: hidden;
@@ -107,23 +108,72 @@ html, body {
   display: block;
 }
 
-/* ---------- Portrait section ---------- */
+/* Pause the wave animation while it is off-screen (toggled from script.js) */
+.wave-divider.is-paused path { animation-play-state: paused !important; }
 
-.portrait-section {
-  min-height: 100vh;
-  width: 100%;
-  background: #ffb5cd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12vh 0;
+/* ---------- Scroll reveal (now also holds the portrait) ---------- */
+
+.reveal {
+  --cover: #ffb5cd;   /* matches the page pink so the join with the wave is invisible */
+  --img-a: url("./img/a.jpg");
+  --img-b: url("./img/b.jpg");
+  --img-c: url("./img/c.jpg");
+  --img-d: url("./img/d.jpg");
+
   position: relative;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+/* Gradients are fallbacks until you add real images to /img */
+.reveal .bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  will-change: opacity, transform;
+}
+.bg-a { background-image: var(--img-a), radial-gradient(ellipse at 30% 40%, #f6e7a8, #e8c766 60%, #b98a2c); }
+.bg-b { background-image: var(--img-b), radial-gradient(circle at 70% 30%, #e9b13b, #b7791f 70%); opacity: 0; }
+.bg-c { background-image: var(--img-c), linear-gradient(#0b0b0b 65%, #d8d2b4 65%); opacity: 0; }
+.bg-d { background-image: var(--img-d), radial-gradient(ellipse at 50% 40%, #8a5a33, #4a2b14); opacity: 0; }
+
+.reveal-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(0,0,0,.10), rgba(0,0,0,.28));
+}
+
+.reveal-cover {
+  position: absolute;
+  inset: 0;
+  background: var(--cover);
+  will-change: clip-path;
+}
+
+/* ---------- Portrait (typographic art), inside the pinned section ---------- */
+
+/* Positioned from script.js (drawCover): it rides just above the dome's peak. */
+.portrait-pin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  will-change: transform, opacity;
 }
 
 .frame {
-  width: min(92vw, 560px);
+  width: min(92vw, 560px, 62vh);   /* 62vh keeps it below the top edge at the pin */
   aspect-ratio: 657 / 492;
   overflow: hidden;
+  /* feather the box so it isn't a hard rectangle */
+  -webkit-mask-image: radial-gradient(ellipse 78% 78% at 50% 50%, #000 62%, transparent 100%);
+          mask-image: radial-gradient(ellipse 78% 78% at 50% 50%, #000 62%, transparent 100%);
 }
 
 p {
@@ -131,10 +181,12 @@ p {
   height: 100%;
   overflow: hidden;
 
+  font-family: "Plus Jakarta Sans", sans-serif;
+
   font-size: 7px;
   line-height: 7px;
-  letter-spacing: 0.3px;
-  font-weight: 700;
+  letter-spacing: 0;
+  font-weight: 800;
   text-align: justify;
   text-align-last: justify;
 
@@ -149,3 +201,71 @@ p {
   color: rgba(255,255,255,0);
   -webkit-text-fill-color: rgba(255,255,255,0);
 }
+
+/* ---------- Text composition over the reveal ---------- */
+
+/* Fixed 1920x870 design space, scaled to fit by JS */
+.reveal-comp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 870px;
+  margin: -435px 0 0 -960px;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  pointer-events: none;
+
+  color: #fff;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 14px rgba(0,0,0,.25);
+}
+
+.row {
+  position: absolute;
+  left: 212px;
+  top: 250px;
+  display: flex;
+  align-items: center;
+}
+
+.tx {
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 40px;
+}
+.tx .in { display: block; opacity: 0; }
+
+.rule {
+  width: 245px;
+  height: 1.5px;
+  margin: 0 43px 0 20px;
+  background: #fff;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+.anchor { position: relative; }
+
+.arc-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 600px;
+  height: 600px;
+  overflow: visible;
+}
+.arc {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.t-craft, .t-without { position: absolute; left: 457px; line-height: 37px; }
+.t-craft   { top: 422px; }
+.t-without { top: 459px; }
