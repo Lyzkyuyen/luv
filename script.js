@@ -2,7 +2,7 @@
 // Paste your own text into `line`. The loop below keeps appending it until the
 // frame is full, so any length works (short phrases repeat, long ones just fill).
 //
-// >>> KEEP YOUR EXISTING TEXT HERE: replace PASTE_YOUR_TEXT_HERE with your original block. <<<
+// >>> KEEP YOUR EXISTING TEXT HERE: replace PASTE_YOUR_TEXT_HERE with your original block. <
 const line = `When you were here, the stars disappear
 Nothing can outshine the dress that you wear
 We should be dancing 'cause girl you look stunning
@@ -148,16 +148,19 @@ function measure() { W = cover.clientWidth; H = cover.clientHeight; }
 // Dome profile. An ellipse meets the flat edge at a right angle, which shows up as a
 // hard "corner" at the sides. This profile eases into the edge with zero slope instead,
 // so the dome melts into the line seamlessly.
-//   SOFT = 1    -> plain ellipse (matches savor.it). Higher values give a pointier, bell-like dome.
+//   SOFT = 1    -> plain ellipse. Lower values (<1) flatten the crown into a plateau
+//   and steepen the shoulders (savor.it-style); higher values (>1) make it pointier/bell-like.
 // WIDEN compensates so the dome keeps roughly the same visual width as the ellipse.
 // (Declared before anything that can call drawCover.)
-const SOFT = 1;
-const WIDEN = 1;
+const SOFT = 0.8;
+const WIDEN = 1.05;  // slight widen to stretch the flat top; kept modest since rx is already larger
 
 // Shape of the cover. yE and h are fractions of viewport height, rx of width.
 //   h < 0  -> arch (the rising arc)      h > 0  -> bowl (hanging from the top)
 // START_SHAPE is what you see while the section scrolls in and at the moment it pins.
-const START_SHAPE = { yE: 1, h: -0.47, rx: 0.66 };
+   const DROP = 0.05;   // gap between portrait and dome
+   const PUSH = 0.04;   // gap between wave and portrait
+  const START_SHAPE = { yE: 1 + DROP + PUSH, h: -0.47, rx: 0.62 };
 const shape = { ...START_SHAPE };
 
 // Entry: runs the whole time the section scrolls in (top bottom -> top top).
@@ -165,7 +168,7 @@ const shape = { ...START_SHAPE };
 gsap.fromTo(shape,
   { yE: 1, h: -0.43, rx: 0.36 },   // slightly lower and narrower start
   {
-    ...START_SHAPE,                 // unchanged: h -0.47, rx 0.66 at the pin
+    ...START_SHAPE,                 // unchanged: h -0.55, rx 0.68 at the pin
     ease: "expo.in",                // was power1.in
     onUpdate: drawCover,
     scrollTrigger: {
@@ -205,7 +208,7 @@ function drawCover() {
     const lift = Math.max(0, (shape.h + 0.4) / 0.4) * 0.25 * H;
     portrait.style.opacity = Math.min(1, -shape.h / 0.25);
     portrait.style.transform =
-      "translate3d(0," + (peak - gap - frame.offsetHeight - lift).toFixed(1) + "px,0)";
+      "translate3d(0," + (peak - DROP * H - gap - frame.offsetHeight - lift).toFixed(1) + "px,0)";
   } else {
     portrait.style.opacity = 0;
   }
@@ -251,7 +254,7 @@ scrollTl
   // gone (whole bowl sequence = 2.4 units)
   .to(shape, { yE: -0.45, h: 0.30, rx: 0.06, duration: 0.4, ease: "power1.in" });
 
-scrollTl.fromTo(".bg-a", { scale: 1.25 }, { scale: 1, duration: 3.9 }, 0);
+scrollTl.fromTo(".bg-a", { scale: 1 }, { scale: 1, duration: 3.9 }, 0);
 
 // 2) "From ..." -> line grows -> background swaps -> "to ..."
 showText(".t-from", 3.3);

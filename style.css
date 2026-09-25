@@ -134,10 +134,14 @@ html, body {
   background-position: center;
   will-change: opacity, transform;
 }
-.bg-a { background-image: var(--img-a), radial-gradient(ellipse at 30% 40%, #f6e7a8, #e8c766 60%, #b98a2c); }
-.bg-b { background-image: var(--img-b), radial-gradient(circle at 70% 30%, #e9b13b, #b7791f 70%); opacity: 0; }
-.bg-c { background-image: var(--img-c), linear-gradient(#0b0b0b 65%, #d8d2b4 65%); opacity: 0; }
-.bg-d { background-image: var(--img-d), radial-gradient(ellipse at 50% 40%, #8a5a33, #4a2b14); opacity: 0; }
+.bg-a { background-image: var(--img-a), radial-gradient(ellipse at 30% 40%, #f6e7a8, #e8c766 60%, #b98a2c);
+  filter: brightness(1.15) saturate(1.15); }
+.bg-b { background-image: var(--img-b), radial-gradient(circle at 70% 30%, #e9b13b, #b7791f 70%); opacity: 0;
+filter: brightness(1.05); }
+.bg-c { background-image: var(--img-c), linear-gradient(#0b0b0b 65%, #d8d2b4 65%); opacity: 0;
+filter: brightness(1.05); }
+.bg-d { background-image: var(--img-d), radial-gradient(ellipse at 50% 40%, #8a5a33, #4a2b14); opacity: 0;
+filter: brightness(1.05); }
 
 .reveal-shade {
   position: absolute;
