@@ -1,8 +1,15 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  background: #ffb5cd;
-  overflow-x: hidden;
+  background: #dcdcdb;
+    overflow-x: hidden;
+}
+
+body {
+  background-image: linear-gradient(#dcdcdb, #dcdcdb);
+  background-repeat: no-repeat;
+  background-size: 100% 100vh;
+  background-size: 100% 100svh;
 }
 
 html {
@@ -21,7 +28,7 @@ html::-webkit-scrollbar {
   top: 0;
   right: 2px;
   bottom: 0;
-  width: 8px;
+  width: 10px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 240ms ease;
@@ -55,11 +62,23 @@ html::-webkit-scrollbar {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
+  z-index: 3;
   gap: 40px;
-  min-height: 100vh;
+  min-height: calc(100vh - 48px);
+  min-height: calc(100svh - 48px);
+  margin: 24px;
   padding: 40px 56px;
-  background: #f6f3eb;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 28px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.58), transparent 54%),
+    linear-gradient(145deg, #f1f0ed 0%, #e2e0dc 58%, #cfcecb 100%);
   position: relative;
+  box-shadow:
+    0 30px 50px -20px rgba(0, 0, 0, 0.18),
+    0 12px 24px -8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 /* -- Left: headline -- */
@@ -131,14 +150,24 @@ html::-webkit-scrollbar {
   }
 }
 
+@media (max-width: 600px) {
+  .hero {
+    min-height: calc(100vh - 20px);
+    min-height: calc(100svh - 20px);
+    margin: 10px;
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+}
+
 /* ---------- Wave divider ---------- */
 
 .wave-divider {
   position: relative;
   width: 100%;
   height: 22vh;
-  margin-top: -9vh;
-  margin-bottom: -2px;
+  margin-top: -24px;
+  margin-bottom: -15px;
   z-index: 2;
   pointer-events: none;
   overflow: hidden;

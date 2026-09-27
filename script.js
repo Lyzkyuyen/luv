@@ -284,16 +284,8 @@ gsap.to(".hero-right", {
 });
 
 // ---------- Wave divider ----------
-gsap.to(".wave-divider", {
-  yPercent: -25,
-  ease: "none",
-  scrollTrigger: {
-    trigger: ".wave-divider",
-    start: "top bottom",
-    end: "bottom top",
-    scrub: true,
-  },
-});
+// Keep the divider in normal document flow so it stays joined to the reveal.
+// Animate the SVG paths themselves, not the wrapper's position.
 
 const waveEl = document.querySelector(".wave-divider");
 
