@@ -5,6 +5,50 @@ html, body {
   overflow-x: hidden;
 }
 
+html {
+  scrollbar-width: none; /* Firefox */
+}
+
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Edge, Safari */
+  width: 0;
+  height: 0;
+}
+
+.custom-scrollbar {
+  position: fixed;
+  z-index: 99999;
+  top: 0;
+  right: 2px;
+  bottom: 0;
+  width: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+  touch-action: none;
+}
+
+.custom-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(12, 12, 11, 0.68);
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+}
+
+.custom-scrollbar-thumb:active {
+  cursor: grabbing;
+}
+
+.custom-scrollbar.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
 /* ---------- Hero: two-column layout ---------- */
 
 .hero {
@@ -266,10 +310,11 @@ p {
   fill: none;
   stroke: #fff;
   stroke-width: 1.5;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
+  opacity: 1;
 }
 
 .t-craft, .t-without { position: absolute; left: 457px; line-height: 37px; }
 .t-craft   { top: 422px; }
 .t-without { top: 459px; }
+
+
