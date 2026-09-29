@@ -1,4 +1,5 @@
 // ---------- Fill the portrait text block ----------
+// >>> PASTE YOUR EXISTING `const line = `...`;` BLOCK OVER THE NEXT LINE (unchanged). <<<
 const line = `When you were here, the stars disappear
 Nothing can outshine the dress that you wear
 We should be dancing 'cause girl you look stunning
@@ -223,6 +224,7 @@ if (window.Lenis) {
   if (document.fonts?.ready) document.fonts.ready.then(updateThumb);
   requestAnimationFrame(updateThumb);
 })();
+
 // ---------- Page-load entrance ----------
 const introTl = gsap.timeline({
   defaults: { ease: "power3.out" },
@@ -306,6 +308,9 @@ if (!reveal) {
   const portrait = reveal.querySelector(".portrait-pin");
   const frame = reveal.querySelector(".frame");
   const arc = reveal.querySelector(".arc");
+  const comp2 = reveal.querySelector(".comp-2");
+  const comp3 = reveal.querySelector(".comp-3");
+  const comp4 = reveal.querySelector(".comp-4");
 
   if (!cover || !comp || !portrait || !frame) {
     console.warn(
@@ -394,7 +399,7 @@ if (!reveal) {
     }
 
     function fitComp() {
-      gsap.set(comp, {
+      gsap.set([comp, comp2, comp3, comp4].filter(Boolean), {
         scale: Math.min(innerWidth / 1920, innerHeight / 870),
       });
     }
@@ -411,24 +416,36 @@ if (!reveal) {
     }
 
     // Bring the arch into position before the pinned sequence begins.
+    const entranceTrigger = () => ({
+      trigger: ".reveal",
+      start: "top bottom",
+      end: "top top",
+      scrub: true,
+      invalidateOnRefresh: true,
+    });
+
+    // Position and height: unchanged, linear.
     gsap.fromTo(
       shape,
+      { yE: 1.15, h: -0.43 },
       {
-        yE: 1,
-        h: -0.43,
-        rx: 0.36,
-      },
-      {
-        ...START_SHAPE,
+        yE: START_SHAPE.yE,
+        h: START_SHAPE.h,
         ease: "none",
         onUpdate: drawCover,
-        scrollTrigger: {
-          trigger: ".reveal",
-          start: "top bottom",
-          end: "top top",
-          scrub: true,
-          invalidateOnRefresh: true,
-        },
+        scrollTrigger: entranceTrigger(),
+      }
+    );
+
+    // Width: starts narrow and opens up as the dome rises.
+    gsap.fromTo(
+      shape,
+      { rx: 0.16 },
+      {
+        rx: START_SHAPE.rx,
+        ease: "power3.in",
+        onUpdate: drawCover,
+        scrollTrigger: entranceTrigger(),
       }
     );
 
@@ -460,14 +477,11 @@ if (!reveal) {
       scrollTrigger: {
         trigger: ".reveal",
         start: "top top",
-        end: "+=125%",
+        end: "+=468.75%", // 30 timeline units x 15.625% (was 390.625% for 25 units)
         pin: true,
         scrub: true,
         anticipatePin: 1,
         invalidateOnRefresh: true,
-
-        // Eight landing points through the pinned sequence.
-        
       },
     });
 
@@ -579,21 +593,168 @@ if (!reveal) {
       6.46
     );
 
-    // Fade the composition away without moving it upward.
+    // ---- Scene 2: first composition scrolls away, "Without ..." takes over ----
+
+    // Rises at roughly scroll speed (1 timeline unit ≈ 0.156 viewport heights of scroll).
     scrollTl.to(
       comp,
       {
-        opacity: 0,
-        duration: 0.8,
+        y: () => -innerHeight * 0.95,
+        duration: 5.4,
         ease: "none",
       },
       6.9
     );
 
-    // Keep the pinned section's total timeline at eight portions.
-    scrollTl.to({}, { duration: 0.2 }, 7.8);
+    function showLine(selector, at) {
+      scrollTl.fromTo(
+        `${selector} .in`,
+        { yPercent: 110, rotate: 3, opacity: 0, transformOrigin: "0% 100%" },
+        {
+          yPercent: 0,
+          rotate: 0,
+          opacity: 1,
+          duration: 0.5,
+          immediateRender: false,
+        },
+        at
+      );
+    }
+
+    showLine(".t2-label", 10.7);
+    showLine(".t2-l1", 10.9);
+    showLine(".t2-l2", 11.2);
+    showLine(".t2-l3", 11.5);
+    showLine(".t2-l4", 11.8);
+    showLine(".t2-l5", 12.1);
+
+    // ---- Comp 2 now exits (rises at scroll speed) as the new background arrives ----
+    if (comp2) {
+      scrollTl.to(
+        comp2,
+        { y: () => -innerHeight * 0.6, duration: 3.8, ease: "none" },
+        13.4
+      );
+    }
+
+    scrollTl.to(".bg-e", { opacity: 1, duration: 0.5 }, 13.4);
+
+    // ---- Scene 3: "We're talking about a world where there's ..." ----
+    if (comp3) {
+      // Small upward settle while the sentence arrives.
+      scrollTl.fromTo(
+        comp3,
+        { y: () => innerHeight * 0.08 },
+        { y: 0, duration: 1.2, ease: "power1.out", immediateRender: false },
+        15.6
+      );
+    }
+
+    showLine(".t3-lead", 15.6);
+
+    // Dashed curve draws in after the sentence lands.
+    const curveMask = reveal.querySelector(".curve-mask");
+    if (curveMask) {
+      const curveLen = curveMask.getTotalLength();
+      gsap.set(curveMask, { strokeDasharray: curveLen, strokeDashoffset: curveLen });
+      scrollTl.to(curveMask, { strokeDashoffset: 0, duration: 1.4, ease: "none" }, 16.1);
+    }
+
+    // Stacked "more" lines.
+    showLine(".t3-m1", 17.0);
+    showLine(".t3-m2", 17.3);
+    showLine(".t3-m3", 17.6);
+    showLine(".t3-m4", 17.9);
+    showLine(".t3-m5", 18.2);
+
+    showLine(".t3-of", 18.5);
+
+    // "& more  room for ..." arrive together.
+    showLine(".t3-m6", 18.9);
+    showLine(".t3-amp", 18.9);
+    showLine(".t3-room", 19.2);
+
+    // ---- Scene 4: background shrinks into a card, "Inspired by ..." arrives ----
+
+    const TOTAL = 30; // keep in sync with `end` above (TOTAL x 15.625%)
+
+    // Split a headline into letters so they can rise one after another.
+    function splitChars(el) {
+      if (!el) return [];
+      const text = el.textContent;
+      el.textContent = "";
+      return [...text].map((c) => {
+        const s = document.createElement("span");
+        s.className = "ch";
+        s.textContent = c === " " ? "\u00A0" : c;
+        el.appendChild(s);
+        return s;
+      });
+    }
+
+    const h1Chars = splitChars(reveal.querySelector(".t4-h1 .hl"));
+    const h2Chars = splitChars(reveal.querySelector(".t4-h2 .hl"));
+    gsap.set([...h1Chars, ...h2Chars], { yPercent: 110 });
+
+    // Invisible optimisation: once bg-e is fully in, the layers under it can't be
+    // seen. Stop drawing them (bg-a also carries a full-screen saturate filter).
+    scrollTl.to(
+      [".bg-a", ".bg-b", ".bg-c", ".bg-d"],
+      { autoAlpha: 0, duration: 0.01, immediateRender: false },
+      14.1
+    );
+
+    // Scene 3 text fades while the card starts to shrink (same as before, just slower).
+    if (comp3) {
+      scrollTl.to(comp3, { opacity: 0, duration: 1.4, ease: "none" }, 20.0);
+    }
+
+    // The card: original technique and numbers, only stretched over more scroll.
+    const SHRINK_AT = 19.9;
+    const SHRINK_DUR = 5.6; // was 3.6
+
+    scrollTl.fromTo(
+      ".bg-stack",
+      { left: "0%", right: "0%", top: "0%", bottom: "0%" },
+      {
+        left: "37.8%",
+        right: "37.7%",
+        top: "9.1%",
+        bottom: "31%",
+        duration: SHRINK_DUR,
+        ease: "power1.inOut", // original ease
+        immediateRender: false,
+      },
+      SHRINK_AT
+    );
+
+    // Pictures crossfade inside the shrinking card, evenly spaced.
+    const FADE = 1.0;
+    const seqStarts = [20.8, 21.8, 22.8, 23.8, 24.8];
+    const beneath = [".bg-e", ".bg-f", ".bg-g", ".bg-h", ".bg-i"]; // layer each picture covers
+
+    gsap.utils.toArray(".bg-seq").forEach((el, i) => {
+      const at = seqStarts[i] ?? 24.8;
+      scrollTl.to(el, { opacity: 1, duration: FADE }, at);
+
+      // Invisible optimisation: once a picture is fully in, stop drawing the one under it.
+      if (beneath[i]) {
+        scrollTl.to(
+          beneath[i],
+          { autoAlpha: 0, duration: 0.01, immediateRender: false },
+          at + FADE
+        );
+      }
+    });
+
+    // Headline, paragraph, button: same fades as before, just slower. The headline
+    // starts as the card nears its end; line 2 follows line 1; copy + button fade in place.
+    scrollTl.to(h1Chars, { yPercent: 0, duration: 1.0, stagger: 0.07 }, 25.2);
+    scrollTl.to(h2Chars, { yPercent: 0, duration: 1.0, stagger: 0.05 }, 26.5);
+    scrollTl.to(".t4-copy", { opacity: 1, duration: 1.0 }, 26.5);
+    scrollTl.to(".t4-btn", { opacity: 1, duration: 1.0 }, 27.0);
+
+    // Short hold at the end, and pin the timeline to TOTAL units.
+    scrollTl.to({}, { duration: 0.2 }, TOTAL - 0.2);
   }
 }
-
-
-

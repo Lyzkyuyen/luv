@@ -1,12 +1,12 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  background: #dcdcdb;
+  background: #f6f3eb;
     overflow-x: hidden;
 }
 
 body {
-  background-image: linear-gradient(#dcdcdb, #dcdcdb);
+  background-image: linear-gradient(#f6f3eb, #f6f3eb);
   background-repeat: no-repeat;
   background-size: 100% 100vh;
   background-size: 100% 100svh;
@@ -72,8 +72,8 @@ html::-webkit-scrollbar {
   border-radius: 28px;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.58), transparent 54%),
-    linear-gradient(145deg, #f1f0ed 0%, #e2e0dc 58%, #cfcecb 100%);
+    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.72), transparent 56%),
+    linear-gradient(145deg, #fffdf8 0%, #eee8dc 58%, #ddd2c2 100%);
   position: relative;
   box-shadow:
     0 30px 50px -20px rgba(0, 0, 0, 0.18),
@@ -182,12 +182,32 @@ html::-webkit-scrollbar {
 }
 
 /* Pause the wave animation while it is off-screen (toggled from script.js) */
-.wave-divider.is-paused path { animation-play-state: paused !important; }
+.wave-divider.is-paused path { animation-play-state: paused !important; }.wave-bottom-edge {
+  animation: waveBottomAnim 4s linear infinite;
+}
+
+@keyframes waveBottomAnim {
+  0% {
+    d: path("M 0,0 L 1440,0 L 1440,560 C 1360,560 1240,590 1152,590 C 1072,590 952,450 864,450 C 784,450 664,600 576,600 C 496,600 376,455 288,455 C 208,455 80,520 0,520 Z");
+  }
+  25% {
+    d: path("M 0,0 L 1440,0 L 1440,470 C 1360,470 1240,580 1152,580 C 1072,580 952,600 864,600 C 784,600 664,440 576,440 C 496,440 376,590 288,590 C 208,590 80,460 0,460 Z");
+  }
+  50% {
+    d: path("M 0,0 L 1440,0 L 1440,590 C 1360,590 1240,455 1152,455 C 1072,455 952,580 864,580 C 784,580 664,600 576,600 C 496,600 376,445 288,445 C 208,445 80,560 0,560 Z");
+  }
+  75% {
+    d: path("M 0,0 L 1440,0 L 1440,480 C 1360,480 1240,600 1152,600 C 1072,600 952,450 864,450 C 784,450 664,585 576,585 C 496,585 376,600 288,600 C 208,600 80,430 0,430 Z");
+  }
+  100% {
+    d: path("M 0,0 L 1440,0 L 1440,560 C 1360,560 1240,590 1152,590 C 1072,590 952,450 864,450 C 784,450 664,600 576,600 C 496,600 376,455 288,455 C 208,455 80,520 0,520 Z");
+  }
+}
 
 /* ---------- Scroll reveal (now also holds the portrait) ---------- */
 
 .reveal {
-  --cover: #ffb5cd;   /* matches the page pink so the join with the wave is invisible */
+  --cover: #f6f3eb;   /* matches the warm page background */
   --img-a: url("./img/a.jpg");
   --img-b: url("./img/b.jpg");
   --img-c: url("./img/c.jpg");
@@ -207,19 +227,17 @@ html::-webkit-scrollbar {
   background-position: center;
   will-change: opacity, transform;
 }
+
 .bg-a { background-image: var(--img-a), radial-gradient(ellipse at 30% 40%, #f6e7a8, #e8c766 60%, #b98a2c);
-  filter: brightness(1.15) saturate(1.15); }
-.bg-b { background-image: var(--img-b), radial-gradient(circle at 70% 30%, #e9b13b, #b7791f 70%); opacity: 0;
-filter: brightness(1.05); }
-.bg-c { background-image: var(--img-c), linear-gradient(#0b0b0b 65%, #d8d2b4 65%); opacity: 0;
-filter: brightness(1.05); }
-.bg-d { background-image: var(--img-d), radial-gradient(ellipse at 50% 40%, #8a5a33, #4a2b14); opacity: 0;
-filter: brightness(1.05); }
+filter: saturate(1.5); }
+.bg-b { background-image: var(--img-b), radial-gradient(circle at 70% 30%, #e9b13b, #b7791f 70%); opacity: 0; }
+.bg-c { background-image: var(--img-c), linear-gradient(#0b0b0b 65%, #d8d2b4 65%); opacity: 0; }
+.bg-d { background-image: var(--img-d), radial-gradient(ellipse at 50% 40%, #8a5a33, #4a2b14); opacity: 0; }
 
 .reveal-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(0,0,0,.10), rgba(0,0,0,.28));
+  background: none;
 }
 
 .reveal-cover {
@@ -347,3 +365,76 @@ p {
 .t-without { top: 459px; }
 
 
+/* ---------- Second composition ("Without ...") ---------- */
+.comp-2 .tx { line-height: 37.5px; }
+.t2-label { position: absolute; left: 516px; top: 259px; }
+.t2-list  { position: absolute; left: 668px; top: 259px; }
+
+/* ---------- Third composition ("We're talking about ...") ---------- */
+.reveal { --img-e: url("./img/e.jpg"); }
+.bg-e {
+  background-image: var(--img-e), radial-gradient(ellipse at 50% 40%, #6f7a3a, #2a3418 75%);
+  opacity: 0;
+}
+
+.comp-3 .tx { line-height: 37px; }
+.t3-lead  { position: absolute; left: 972px;  top: 259px; }
+.t3-mores { position: absolute; left: 930px;  top: 530px; }
+.t3-of    { position: absolute; left: 1040px; top: 678px; }   /* beside row 5 */
+.t3-amp   { position: absolute; left: 865px;  top: 715px; }   /* row 6 */
+.t3-room  { position: absolute; left: 1040px; top: 715px; }   /* row 6 */
+
+.curve-svg { position: absolute; left: 0; top: 0; width: 1920px; height: 870px; overflow: visible; }
+.curve-dash { fill: none; stroke: #fff; stroke-width: 1.5; stroke-dasharray: 9 7; }
+
+
+/* ---------- Scene 4: shrinking card + "Inspired by ..." ---------- */
+.reveal {
+  --ink: #3b0f18;                       /* headline / paragraph colour */
+  --img-f: url("./img/f.jpg");
+  --img-g: url("./img/g.jpg");
+  --img-h: url("./img/h.jpg");
+  --img-i: url("./img/i.jpg");
+  --img-j: url("./img/j.jpg");
+  background: var(--cover);             /* the margins around the card */
+}
+
+.bg-clip  { position: absolute; inset: 0; }
+.bg-stack { position: absolute; inset: 0; transform-origin: 50% 39%; will-change: transform; }
+.bg-seq   { opacity: 0; }
+.bg-f { background-image: var(--img-f), linear-gradient(135deg, #e6a93a, #b9791f); }
+.bg-g { background-image: var(--img-g), linear-gradient(135deg, #7a4a2a, #3a2013); }
+.bg-h { background-image: var(--img-h), linear-gradient(135deg, #6b7a3a, #2f3a1c); }
+.bg-i { background-image: var(--img-i), radial-gradient(circle at 40% 40%, #e8d27a, #b8a04a 70%); }
+.bg-j { background-image: var(--img-j), linear-gradient(135deg, #4a6b3a, #1c2a14); }
+
+.comp-4 { color: var(--ink); text-shadow: none; }
+
+.t4-h1, .t4-h2 {
+  position: absolute;
+  padding: 0 0.08em;
+  font-family: "Instrument Serif", "Times New Roman", serif;
+  font-weight: 400;
+  font-size: 168px;
+  line-height: 188px;
+  letter-spacing: -0.035em;
+}
+.t4-h1 { left: 64px;  top: 450px; }
+.t4-h2 { left: 505px; top: 637px; }
+.comp-4 .hl { display: block; }
+.ch { display: inline-block; }
+
+.t4-copy {
+  position: absolute; left: 1277px; top: 428px;
+  font-size: 22px; line-height: 33px; letter-spacing: -0.01em;
+  opacity: 0;
+}
+.t4-btn {
+  position: absolute; left: 1277px; top: 522px;
+  width: 275px; height: 79px;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  background: rgba(59, 15, 24, 0.07);
+  font-size: 21px;
+  opacity: 0;
+}
+.t4-btn i { display: block; width: 44px; height: 1.5px; background: currentColor; }
