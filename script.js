@@ -305,17 +305,13 @@ if (!reveal) {
 } else {
   const cover = reveal.querySelector(".reveal-cover");
   const comp = reveal.querySelector(".reveal-comp");
-  const portrait = reveal.querySelector(".portrait-pin");
-  const frame = reveal.querySelector(".frame");
   const arc = reveal.querySelector(".arc");
   const comp2 = reveal.querySelector(".comp-2");
   const comp3 = reveal.querySelector(".comp-3");
   const comp4 = reveal.querySelector(".comp-4");
 
-  if (!cover || !comp || !portrait || !frame) {
-    console.warn(
-      "Scroll animation not initialized: .reveal-cover, .reveal-comp, .portrait-pin, or .frame is missing."
-    );
+    if (!cover || !comp) {
+    console.warn("Scroll animation not initialized: .reveal-cover or .reveal-comp is missing.");
   } else {
     let W = cover.clientWidth;
     let H = cover.clientHeight;
@@ -378,24 +374,8 @@ if (!reveal) {
           .join(",") +
         ")";
 
-      // Keep the portrait above the arch, then hide it as the arch becomes a bowl.
-      if (shape.h < 0) {
-        const peak = yE + h;
-        const gap = 0.04 * H;
-        const lift = Math.max(0, (shape.h + 0.4) / 0.4) * 0.25 * H;
 
-        portrait.style.opacity = Math.min(1, -shape.h / 0.25);
-        portrait.style.transform =
-          `translate3d(0,${(
-            peak -
-            DROP * H -
-            gap -
-            frame.offsetHeight -
-            lift
-          ).toFixed(1)}px,0)`;
-      } else {
-        portrait.style.opacity = 0;
-      }
+      
     }
 
     function fitComp() {
@@ -757,4 +737,27 @@ if (!reveal) {
     // Short hold at the end, and pin the timeline to TOTAL units.
     scrollTl.to({}, { duration: 0.2 }, TOTAL - 0.2);
   }
+
+  // ---------- Next page reveal (curtain / footer-reveal effect) ----------
+// The page itself is fixed underneath (see .page-next in CSS); the section above scrolls
+// away and uncovers it. This scrub only adds the slower "parallax" on the page's content.
+const nextPage = document.querySelector(".page-next");
+
+if (nextPage) {
+  gsap.fromTo(
+    ".page-next-inner",
+    { yPercent: 20 },
+    {
+      yPercent: 0,
+      ease: "none",
+      scrollTrigger: {
+        trigger: nextPage,
+        start: "top bottom", // page starts being uncovered
+        end: "top top",      // page fully uncovered
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    }
+  );
+}
 }
