@@ -171,18 +171,40 @@
     <div class="page-next-fixed">
       <div class="page-next-inner">
         <div class="n-stage">
-          <img class="n-star n-star-a" src="./assets/el/star-a.png" alt="" aria-hidden="true">
-          <img class="n-star n-star-b" src="./assets/el/star-b.png" alt="" aria-hidden="true">
-          <div class="n-portrait">
-            <div class="frame">
-              <p id="txt"></p>
-            </div>
-          </div>
-        </div>
+        <img class="n-star n-star-a" src="./assets/el/star-a.png" alt="" aria-hidden="true">
+        <canvas class="n-grid" aria-hidden="true"></canvas>
+        <img class="n-star n-star-b" src="./assets/el/star-b.png" alt="" aria-hidden="true">
+
+    <div class="n-portrait">
+         <div class="frame">
+           <p id="txt"></p>
+         </div>
+     </div>
+
+  <!-- decorations: siblings of the portrait, so % = % of the stage -->
+  <img class="n-deco n-flower-a" src="./assets/el/flower-a.jpg" alt="" aria-hidden="true">
+  <img class="n-deco n-lips"     src="./assets/el/lips.jpg"     alt="" aria-hidden="true">
+  <img class="n-deco n-flower-b" src="./assets/el/flower-b.jpg" alt="" aria-hidden="true">
+       </div>
       </div>
     </div>
   </section>
-
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="deepen" color-interpolation-filters="sRGB">
+    <!-- step 1: push the off-white background to pure white -->
+    <feComponentTransfer>
+      <feFuncR type="linear" slope="1.1"/>
+      <feFuncG type="linear" slope="1.1"/>
+      <feFuncB type="linear" slope="1.1"/>
+    </feComponentTransfer>
+    <!-- step 2: gamma darkens the pale petals; white stays white -->
+    <feComponentTransfer>
+      <feFuncR type="gamma" amplitude="1" exponent="2.6" offset="0"/>
+      <feFuncG type="gamma" amplitude="1" exponent="2.6" offset="0"/>
+      <feFuncB type="gamma" amplitude="1" exponent="2.6" offset="0"/>
+    </feComponentTransfer>
+  </filter>
+</svg>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>

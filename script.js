@@ -760,4 +760,180 @@ if (nextPage) {
     }
   );
 }
+
+// ---------- Proximity-scale star grid on the next page ----------
+(() => {
+  const canvas = document.querySelector(".n-grid");
+  const page = document.querySelector(".page-next");
+  const hole = document.querySelector(".n-portrait"); // the grid keeps this area clear
+  if (!canvas || !page) return;
+  const ctx = canvas.getContext("2d");
+
+  // ---- tweak here ----
+  const SHAPE = "star";     // "star" (4-point sparkle) or "dot"
+  const GAP = 46;           // px between grid points
+  const BASE = 3;           // resting size (radius, px)
+  const MAX_SCALE = 4.5;    // how many times bigger a point gets right under the cursor
+  const REACH = 240;        // px: how far the cursor's influence reaches
+  const REST_ALPHA = 0.22;  // resting opacity
+  // --------------------
+
+  const ptr = { x: -9999, y: -9999, sx: -9999, sy: -9999 }; // raw and smoothed pointer
+  let w = 0, h = 0, dpr = 1, visible = false;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = canvas.clientWidth;
+    h = canvas.clientHeight;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+  }
+
+  function sparkle(x, y, r) {
+    const k = r * 0.28; // waist of the star
+    ctx.beginPath();
+    ctx.moveTo(x, y - r);
+    ctx.quadraticCurveTo(x + k, y - k, x + r, y);
+    ctx.quadraticCurveTo(x + k, y + k, x, y + r);
+    ctx.quadraticCurveTo(x - k, y + k, x - r, y);
+    ctx.quadraticCurveTo(x - k, y - k, x, y - r);
+    ctx.fill();
+  }
+
+  function draw() {
+    if (!w || !h) return;
+
+    // ease the pointer so the scaling glides instead of snapping
+    if (ptr.x < -1000 || ptr.sx < -1000) {
+      ptr.sx = ptr.x;
+      ptr.sy = ptr.y;
+    } else {
+      ptr.sx += (ptr.x - ptr.sx) * 0.2;
+      ptr.sy += (ptr.y - ptr.sy) * 0.2;
+    }
+
+    // pointer and portrait, measured relative to the canvas (it moves during the reveal)
+    const cr = canvas.getBoundingClientRect();
+    const mx = ptr.sx - cr.left;
+    const my = ptr.sy - cr.top;
+    let hx = 0, hy = 0, hrx = 0, hry = 0;
+    if (hole) {
+      const hr = hole.getBoundingClientRect();
+      hx = hr.left - cr.left + hr.width / 2;
+      hy = hr.top - cr.top + hr.height / 2;
+      hrx = hr.width / 2;
+      hry = hr.height / 2;
+    }
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#fff";
+
+    const cols = Math.floor(w / GAP);
+    const rows = Math.floor(h / GAP);
+    const ox = (w - (cols - 1) * GAP) / 2;
+    const oy = (h - (rows - 1) * GAP) / 2;
+
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < cols; i++) {
+        const x = ox + i * GAP;
+        const y = oy + j * GAP;
+
+        if (hrx) {
+          const nx = (x - hx) / hrx;
+          const ny = (y - hy) / hry;
+          if (nx * nx + ny * ny < 1) continue; // inside the portrait's oval
+        }
+
+        const d = Math.hypot(x - mx, y - my);
+        const t = d < REACH ? 1 - d / REACH : 0;
+        const k = t * t * (3 - 2 * t); // smoothstep falloff
+        const size = BASE * (1 + (MAX_SCALE - 1) * k);
+
+        ctx.globalAlpha = REST_ALPHA + (1 - REST_ALPHA) * k;
+        if (SHAPE === "dot") {
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          sparkle(x, y, size);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  window.addEventListener("pointermove", (e) => {
+    ptr.x = e.clientX;
+    ptr.y = e.clientY;
+  }, { passive: true });
+  document.documentElement.addEventListener("mouseleave", () => {
+    ptr.x = ptr.y = -9999;
+  });
+
+  if ("ResizeObserver" in window) new ResizeObserver(resize).observe(canvas);
+  resize();
+
+  // only draw while the page is actually on screen
+  new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting && !visible) {
+      visible = true;
+      gsap.ticker.add(draw);
+    } else if (!entry.isIntersecting && visible) {
+      visible = false;
+      gsap.ticker.remove(draw);
+    }
+  }).observe(page);
+})();
+
+// ---------- Big stars swell as the cursor gets close (proximity scale) ----------
+(() => {
+  const stars = gsap.utils.toArray(".n-star");
+  const page = document.querySelector(".page-next");
+  if (!stars.length || !page) return;
+
+  // ---- tweak here ----
+  const REST = 0.8;   // resting scale: keep equal to the fallback in the CSS var(--s, 0.8)
+  const MAX = 0.85;   // scale when the cursor is right on a star ("a bit" bigger)
+  const REACH = 1.2;  // how far away it starts to react, in star-radiuses
+  // --------------------
+
+  const toScale = gsap.utils.mapRange(0, 1, REST, MAX); // closeness (0..1) -> scale
+  gsap.set(stars, { "--s": REST });
+
+  let visible = false;
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+  }).observe(page);
+
+  window.addEventListener("pointermove", (e) => {
+    if (!visible || e.pointerType === "touch") return;
+
+    stars.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const radius = (Math.max(el.offsetWidth, el.offsetHeight) * REST) / 2;
+      const d = Math.hypot(
+        e.clientX - (r.left + r.width / 2),
+        e.clientY - (r.top + r.height / 2)
+      );
+      const close = gsap.utils.clamp(0, 1, 1 - d / (radius * REACH));
+      const eased = close * close * (3 - 2 * close); // smoothstep falloff
+
+      gsap.to(el, {
+        "--s": toScale(eased),
+        duration: 0.6,
+        ease: "power3.out",
+        overwrite: "auto",
+      });
+    });
+  }, { passive: true });
+
+  // cursor left the window: settle back to rest
+  document.documentElement.addEventListener("mouseleave", () => {
+    gsap.to(stars, { "--s": REST, duration: 0.8, ease: "power3.out", overwrite: "auto" });
+  });
+})();
+
+
+
 }

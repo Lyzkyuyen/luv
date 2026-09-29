@@ -454,7 +454,7 @@ p {
   width: 100%;
   height: 100vh;         /* keep equal to .page-next */
   overflow: hidden;
-  background: #ffb5cd;   /* blank for now: change to whatever the page should be */
+  background: #ff8bb0;   /* blank for now: change to whatever the page should be */
 }
 
 .page-next-inner {
@@ -474,7 +474,7 @@ p {
   height: max(100vh, calc(100vw * 9 / 16));
   transform: translate(-50%, -50%);
   container-type: size;
-  background: #ffb5cd;   /* the paper the stars multiply against */
+  background: #ff8bb0;   /* the paper the stars multiply against */
 }
 
 /* The star art is dark halftone on an opaque white rectangle: multiply drops the white */
@@ -482,7 +482,7 @@ p {
   position: absolute;
   filter: invert(1);         /* dark halftone becomes white */
   mix-blend-mode: screen;    /* and the source's white box drops out on the dark paper */
-  scale: 0.8;                /* a bit smaller, shrinking around each star's centre */
+  scale: var(--s, 0.8);                /* a bit smaller, shrinking around each star's centre */
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -508,3 +508,37 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .n-star { animation: none; }
 }
+
+/* Proximity-scale star grid (drawn by script.js) */
+.n-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;            /* above the big stars, below the portrait (z-index 5) */
+  pointer-events: none;
+}
+
+
+/* ---------- Flowers + lips around the portrait ---------- */
+/* left/top are each piece's CENTRE (in % of the stage); width is in stage units, so it scales with the stars */
+.n-deco {
+  position: absolute;
+  z-index: 6;                       /* above the portrait (z-index 5) */
+  mix-blend-mode: multiply;         /* drops the JPGs' white background onto the paper */
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.n-flower-a { left: 32.7%; top: 29.8%; width: 14cqw; }                       /* top-left of the portrait */
+.n-lips     { left: 65.1%; top: 29.5%; width: 6.5cqw;
+              transform: translate(-50%, -50%) rotate(25deg); }              /* top-right, tilted like your mark */
+.n-flower-b {
+  left: 65.6%;
+  top: 71.8%;
+  width: 12cqw;
+  filter: url(#deepen) saturate(1.8);
+}
+
