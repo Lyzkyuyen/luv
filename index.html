@@ -261,6 +261,74 @@
   </filter>
 </svg>
 
+<button type="button" class="player-minimizer" aria-label="Open compact music player" aria-controls="compact-music-player" aria-expanded="false">
+  <svg class="player-minimizer-icon" viewBox="0 0 28 34" focusable="false" aria-hidden="true">
+    <defs>
+      <linearGradient id="player-tab-glass" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fffafd" stop-opacity="0.98" />
+        <stop offset="0.48" stop-color="#f6c6d8" stop-opacity="0.94" />
+        <stop offset="1" stop-color="#d9789e" stop-opacity="0.96" />
+      </linearGradient>
+    </defs>
+    <path class="player-minimizer-triangle" d="M22 3 6 17 22 31Z" fill="url(#player-tab-glass)" />
+    <path class="player-minimizer-glint" d="m18 7-11 10 11 10" />
+  </svg>
+</button>
+
+<aside class="player-popover" id="compact-music-player" aria-label="Compact music player" aria-hidden="true" inert>
+  <div class="mini-player-art" role="img" aria-label="Current album artwork"></div>
+
+  <div class="mini-player-content">
+    <button type="button" class="mini-player-close" aria-label="Close music player">×</button>
+
+    <div class="mini-player-heading">
+      <span class="mini-player-device">Now Playing</span>
+      <span class="mini-player-airplay" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path fill="currentColor" d="M4 4h16v11h-4v-2h2V6H6v7h2v2H4V4Zm8 7 5 6h-3v4h-4v-4H7l5-6Z" />
+        </svg>
+      </span>
+    </div>
+
+    <div class="mini-player-track">
+      <h2 class="mini-player-title">A Quiet Story</h2>
+      <p class="mini-player-artist">Sharlene</p>
+    </div>
+
+    <div class="mini-player-timeline" aria-hidden="true">
+      <div class="mini-player-progress" style="--val: 34%;">
+        <span class="mini-player-progress-fill"></span>
+        <span class="mini-player-progress-knob"></span>
+      </div>
+      <div class="mini-player-times">
+        <span>1:24</span>
+        <span>3:18</span>
+      </div>
+    </div>
+
+    <div class="mini-player-controls" aria-hidden="true">
+      <span class="mini-player-control">
+        <svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zm12 0v14L8 12 18 5Z" /></svg>
+      </span>
+      <span class="mini-player-control mini-player-play">
+        <svg viewBox="0 0 24 24"><path d="M7 4.8v14.4L19 12 7 4.8Z" /></svg>
+      </span>
+      <span class="mini-player-control">
+        <svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM6 5v14l10-7L6 5Z" /></svg>
+      </span>
+    </div>
+
+    <div class="mini-player-volume" aria-hidden="true">
+      <svg class="mini-player-volume-icon" viewBox="0 0 24 24">
+        <path d="M3 9v6h4l5 4V5L7 9H3Zm12.5-.6v7.2a4 4 0 0 0 0-7.2Zm0-3v2.1a7 7 0 0 1 0 11.1v2.1a9 9 0 0 0 0-15.3Z" />
+      </svg>
+      <div class="mini-player-volume-track">
+        <span class="mini-player-volume-fill"></span>
+        <span class="mini-player-volume-knob"></span>
+      </div>
+    </div>
+  </div>
+</aside>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js"></script>

@@ -237,7 +237,7 @@ introTl
     stagger: 0.1,
     ease: "power4.out",
   }, 0.1)
-  .fromTo(".n-player", {
+  .fromTo(".n-player-glass", {
     y: 30,
     opacity: 0,
   }, {
@@ -251,6 +251,115 @@ introTl
     duration: 1,
   }, 0.7);
 
+// ---------- Compact music player glass tab + synchronized details ----------
+const musicPlayer = document.querySelector(".n-player");
+const playerMinimizer = document.querySelector(".player-minimizer");
+const compactPlayer = document.querySelector(".player-popover");
+const compactPlayerClose = document.querySelector(".mini-player-close");
+
+if (musicPlayer && playerMinimizer && compactPlayer) {
+  const mainTitle = musicPlayer.querySelector(".n-player-title");
+  const mainArtist = musicPlayer.querySelector(".n-player-artist");
+  const mainArtwork = musicPlayer.querySelector(".n-player-cover");
+  const mainProgress = musicPlayer.querySelector(".n-player-scrub .n-slider");
+  const mainTimes = musicPlayer.querySelectorAll(".n-player-times span");
+
+  const compactTitle = compactPlayer.querySelector(".mini-player-title");
+  const compactArtist = compactPlayer.querySelector(".mini-player-artist");
+  const compactArtwork = compactPlayer.querySelector(".mini-player-art");
+  const compactProgress = compactPlayer.querySelector(".mini-player-progress");
+  const compactTimes = compactPlayer.querySelectorAll(".mini-player-times span");
+
+  function syncCompactPlayer() {
+    if (mainTitle && compactTitle) compactTitle.textContent = mainTitle.textContent.trim();
+    if (mainArtist && compactArtist) compactArtist.textContent = mainArtist.textContent.trim();
+
+    if (mainArtwork && compactArtwork) {
+      const artwork = getComputedStyle(mainArtwork).backgroundImage;
+      compactArtwork.style.backgroundImage = artwork;
+      compactArtwork.setAttribute(
+        "aria-label",
+        mainArtwork.getAttribute("aria-label") || "Current album artwork"
+      );
+    }
+
+    if (mainProgress && compactProgress) {
+      const progress = getComputedStyle(mainProgress).getPropertyValue("--val").trim();
+      if (progress) compactProgress.style.setProperty("--val", progress);
+    }
+
+    mainTimes.forEach((time, index) => {
+      if (compactTimes[index]) compactTimes[index].textContent = time.textContent.trim();
+    });
+  }
+
+  function setCompactPlayerOpen(open, returnFocus = false) {
+    syncCompactPlayer();
+    compactPlayer.classList.toggle("is-open", open);
+    compactPlayer.setAttribute("aria-hidden", String(!open));
+    compactPlayer.inert = !open;
+    playerMinimizer.classList.toggle("is-open", open);
+    playerMinimizer.setAttribute("aria-expanded", String(open));
+
+    if (open) {
+      requestAnimationFrame(() => compactPlayerClose?.focus({ preventScroll: true }));
+    } else if (returnFocus) {
+      playerMinimizer.focus({ preventScroll: true });
+    }
+  }
+
+  playerMinimizer.addEventListener("click", () => {
+    setCompactPlayerOpen(!compactPlayer.classList.contains("is-open"));
+  });
+  compactPlayerClose?.addEventListener("click", () => setCompactPlayerOpen(false, true));
+
+  document.addEventListener("pointerdown", (event) => {
+    if (
+      compactPlayer.classList.contains("is-open") &&
+      !compactPlayer.contains(event.target) &&
+      !playerMinimizer.contains(event.target)
+    ) {
+      setCompactPlayerOpen(false);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && compactPlayer.classList.contains("is-open")) {
+      setCompactPlayerOpen(false, true);
+    }
+  });
+
+  // Keep displayed title, artist, artwork, and progress in sync if the main
+  // player is updated later (for example, when a track is selected).
+  if ("MutationObserver" in window) {
+    const playerContentObserver = new MutationObserver(syncCompactPlayer);
+    [mainTitle, mainArtist, mainArtwork, mainProgress, ...mainTimes]
+      .filter(Boolean)
+      .forEach((element) => {
+        playerContentObserver.observe(element, {
+          attributes: true,
+          childList: true,
+          characterData: true,
+          subtree: true,
+        });
+      });
+  }
+
+  syncCompactPlayer();
+
+  if ("IntersectionObserver" in window) {
+    const playerVisibilityObserver = new IntersectionObserver(([entry]) => {
+      const playerIsOffscreen = !entry.isIntersecting;
+      playerMinimizer.classList.toggle("is-visible", playerIsOffscreen);
+
+      if (!playerIsOffscreen && compactPlayer.classList.contains("is-open")) {
+        setCompactPlayerOpen(false);
+      }
+    }, { threshold: 0 });
+
+    playerVisibilityObserver.observe(musicPlayer);
+  }
+}
 // ---------- Hero content fades as it scrolls away ----------
 gsap.to(".hero-content", {
   y: 60,
