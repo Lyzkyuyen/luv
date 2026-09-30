@@ -518,3 +518,210 @@ filter: saturate(1.5); }
   width: 12cqw;
   filter: url(#deepen) saturate(1.8);
 }
+
+/* ---------- Glass music player (right side of the last page) ---------- */
+/* Built on the reference card (754px wide): 1em = 1/75.4 of the card width, so every
+   em below is (reference px / 10) and the whole player scales with the stage.
+   Resize it by changing the 16cqw; move it with left/top. */
+
+.n-player {
+  position: absolute;
+  left: 84.5%;                       /* centre of the player, in % of the stage */
+  top: 50%;
+  z-index: 6;
+  width: 75.4em;
+  height: 122.6em;
+  font-size: calc(16cqw / 75.4);
+  transform: translate(-50%, -50%);
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Plus Jakarta Sans", system-ui, sans-serif;
+  color: #fff;
+  -webkit-user-select: none;
+          user-select: none;
+}
+
+/* The frosted card: blur + saturation of whatever is behind it, a grey tint,
+   a bright top-left sheen and a thin light rim, like iOS's Control Center. */
+.n-player-glass {
+  --tint-top: rgba(96, 96, 99, 0.46);   /* raise the alpha for a darker glass, lower for a clearer one */
+  --tint-bot: rgba(46, 46, 49, 0.58);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 5.7em 5.3em 0;
+  border-radius: 8.6em;
+  overflow: hidden;
+
+  background:
+    radial-gradient(90% 40% at 15% 0%, rgba(255, 255, 255, 0.26), transparent 70%),
+    radial-gradient(60% 30% at 90% 100%, rgba(255, 255, 255, 0.10), transparent 70%),
+    linear-gradient(180deg, var(--tint-top), var(--tint-bot));
+  -webkit-backdrop-filter: blur(6em) saturate(1.7);
+          backdrop-filter: blur(6em) saturate(1.7);
+  box-shadow:
+    0 3.5em 8em rgba(120, 10, 50, 0.30),
+    inset 0 0.12em 0.3em rgba(255, 255, 255, 0.45),
+    inset 0 -0.1em 0.3em rgba(255, 255, 255, 0.12);
+}
+
+/* gradient rim: bright at the top-left and bottom-right corners */
+.n-player-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 0.14em;
+  border-radius: inherit;
+  background: linear-gradient(150deg,
+    rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.10) 30%,
+    rgba(255, 255, 255, 0.06) 70%, rgba(255, 255, 255, 0.40));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+/* ---- cover ---- */
+.n-player-cover {
+  flex: none;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3em;
+  background: #000 center / cover no-repeat;
+  box-shadow: 0 1.5em 4em rgba(0, 0, 0, 0.35);
+}
+
+/* ---- device label, title/artist (empty for now), AirPlay ---- */
+.n-player-info {
+  position: relative;
+  flex: none;
+  height: 12em;
+  margin-top: 4.6em;
+}
+
+.n-player-device {
+  display: block;
+  font-size: 2.2em;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.n-player-titles {
+  position: absolute;
+  left: 0;
+  right: 9em;
+  top: 3.6em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+.n-player-title,
+.n-player-artist {
+  display: block;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.n-player-title  { font-size: 2.8em; font-weight: 700; }
+.n-player-artist { font-size: 2.6em; font-weight: 500; color: rgba(255, 255, 255, 0.6); }
+
+.n-player-airplay {
+  position: absolute;
+  right: 1.6em;
+  top: 2.5em;
+  width: 4.4em;
+  height: 4.4em;
+  color: rgba(255, 255, 255, 0.85);
+}
+.n-player-airplay svg { width: 100%; height: 100%; }
+
+/* ---- progress bar + times ---- */
+.n-player-scrub { flex: none; margin-top: 1.8em; }
+
+.n-player-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.7em;
+  color: rgba(255, 255, 255, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+.n-player-times span { font-size: 2.2em; line-height: 1; font-weight: 500; }
+
+/* shared slider (progress + volume): set --val (0%..100%) from JS */
+.n-slider {
+  --val: 30%;
+  --h: 1em;          /* track thickness */
+  --knob: 1.8em;     /* knob diameter */
+  position: relative;
+  height: var(--h);
+  border-radius: var(--h);
+  background: rgba(255, 255, 255, 0.30);
+  cursor: pointer;
+}
+.n-slider .n-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--val);
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.92);
+}
+.n-slider .n-knob {
+  position: absolute;
+  top: 50%;
+  left: var(--val);
+  width: var(--knob);
+  height: var(--knob);
+  margin: calc(var(--knob) / -2) 0 0 calc(var(--knob) / -2);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0.2em 0.7em rgba(0, 0, 0, 0.30);
+}
+
+/* ---- transport buttons ---- */
+.n-player-controls {
+  flex: none;
+  height: 6.8em;
+  margin-top: 3.8em;
+  padding: 0 3.9em;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  justify-items: center;
+}
+
+.n-btn {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.n-btn:active { transform: scale(0.9); opacity: 0.7; }
+.n-btn svg {
+  display: block;
+  overflow: visible;
+  fill: currentColor;
+  filter: drop-shadow(0 0.1em 0.3em rgba(0, 0, 0, 0.18));
+}
+
+/* ---- volume ---- */
+.n-player-volume {
+  flex: none;
+  height: 5.2em;
+  margin-top: 5.8em;
+  display: grid;
+  grid-template-columns: 9.7em 1fr 9.5em;
+  align-items: center;
+  justify-items: center;
+}
+.n-vol-icon { display: block; fill: currentColor; color: rgba(255, 255, 255, 0.55); }
+.n-slider.n-vol { --h: 0.6em; --knob: 5.2em; justify-self: stretch; }

@@ -237,6 +237,15 @@ introTl
     stagger: 0.1,
     ease: "power4.out",
   }, 0.1)
+  .fromTo(".n-player", {
+    y: 30,
+    opacity: 0,
+  }, {
+    y: 0,
+    opacity: 1,
+    duration: 1.1,
+    ease: "power4.out",
+  }, 0.35)
   .to(".hero-sub", {
     opacity: 1,
     duration: 1,
