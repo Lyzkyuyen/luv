@@ -1,3 +1,27 @@
+@font-face {
+  font-family: "Silka";
+  src: url("./fonts/silka-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Silka";
+  src: url("./fonts/silka-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Silka";
+  src: url("./fonts/silka-medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -56,40 +80,32 @@ html::-webkit-scrollbar {
   opacity: 1;
   pointer-events: auto;
 }
-/* ---------- Hero: two-column layout ---------- */
+
+/* ---------- Hero: full-bleed black (Metacci style) ---------- */
 
 .hero {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   align-items: center;
-  z-index: 3;
-  gap: 40px;
-  min-height: calc(100vh - 48px);
-  min-height: calc(100svh - 48px);
-  margin: 24px;
-  padding: 40px 56px;
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  border-radius: 28px;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.72), transparent 56%),
-    linear-gradient(145deg, #fffdf8 0%, #eee8dc 58%, #ddd2c2 100%);
   position: relative;
-  box-shadow:
-    0 30px 50px -20px rgba(0, 0, 0, 0.18),
-    0 12px 24px -8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  z-index: 3;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 0 clamp(24px, 4.2vw, 80px);
+  background: #f6f3eb;
+  overflow: hidden;
 }
 
-/* -- Left: headline -- */
+.hero-content {
+  max-width: 1200px;
+}
 
 .hero-title {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-weight: 700;
-  font-size: clamp(48px, 5.8vw, 84px);
-  line-height: 1;
-  letter-spacing: -0.035em;
-  color: #0f0f0f;
+  font-family: Silka, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 500; 
+  font-size: clamp(38px, 4.2vw, 84px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: #000000;
 }
 
 .title-line {
@@ -101,63 +117,20 @@ html::-webkit-scrollbar {
 .title-inner {
   display: inline-block;
   will-change: transform;
-  transform: translateY(110%);  /* starting position for the entrance animation */
+  transform: translateY(110%);  /* start position for the entrance animation */
 }
 
-/* -- Right: "Sharlene" -- */
-
-.hero-right {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sharlene-wrap {
-  position: relative;
-  display: inline-block;   /* shrinks tightly around just the word */
-}
-
-.hero-text {
-  position: relative;
-  z-index: 1;
-  font-family: "WindSong", cursive;
-  font-weight: 500;
-  font-size: clamp(3rem, 9vw, 7rem);
-  letter-spacing: 0.02em;
-  color: #000000;
+.hero-sub {
+  max-width: 600px;
+  margin-top: 38px;
+  font-family: Silka, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 400;
+  font-size: clamp(16px, 1.35vw, 26px);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-align: left;
+  color: #e51054;          /* pink, same as the wave and lyric portrait */
   opacity: 0;
-}
-
-.swoosh {
-  position: absolute;
-  left: 50%;
-  bottom: 0.05em;
-  translate: -50% 0;
-  width: 100%;
-  height: 1em;
-  z-index: 0;
-  pointer-events: none;
-  transform-origin: left center;
-  transform: scaleX(0);
-}
-
-
-@media (max-width: 1100px) {
-  .hero {
-    grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 20px 32px;
-  }
-}
-
-@media (max-width: 600px) {
-  .hero {
-    min-height: calc(100vh - 20px);
-    min-height: calc(100svh - 20px);
-    margin: 10px;
-    padding: 24px 20px;
-    border-radius: 20px;
-  }
 }
 
 /* ---------- Wave divider ---------- */
@@ -166,10 +139,11 @@ html::-webkit-scrollbar {
   position: relative;
   width: 100%;
   height: 22vh;
-  margin-top: -24px;
+  margin-top: -1px;
   margin-bottom: -15px;
   z-index: 2;
   pointer-events: none;
+  background: linear-gradient(#f6f3eb 0 36%, transparent 36%);
 }
 
 .wave-divider svg {
@@ -182,7 +156,9 @@ html::-webkit-scrollbar {
 }
 
 /* Pause the wave animation while it is off-screen (toggled from script.js) */
-.wave-divider.is-paused path { animation-play-state: paused !important; }.wave-bottom-edge {
+.wave-divider.is-paused path { animation-play-state: paused !important; }
+
+.wave-bottom-edge {
   animation: waveBottomAnim 4s linear infinite;
 }
 
@@ -271,7 +247,8 @@ filter: saturate(1.5); }
           mask-image: radial-gradient(ellipse 78% 78% at 50% 50%, #000 62%, transparent 100%);
 }
 
-p {
+/* scoped to the lyric portrait only, so it no longer leaks onto the hero paragraph */
+.frame p {
   margin: 0;
   height: 100%;
   overflow: hidden;
@@ -541,4 +518,3 @@ p {
   width: 12cqw;
   filter: url(#deepen) saturate(1.8);
 }
-

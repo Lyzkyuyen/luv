@@ -231,50 +231,20 @@ const introTl = gsap.timeline({
 });
 
 introTl
-  .to(
-    ".title-inner",
-    {
-      y: 0,
-      duration: 1.1,
-      stagger: 0.08,
-      ease: "power4.out",
-    },
-    0.1
-  )
-  .to(
-    ".hero-text",
-    {
-      opacity: 1,
-      duration: 1,
-    },
-    0.6
-  )
-  .to(
-    ".swoosh",
-    {
-      scaleX: 1,
-      duration: 0.6,
-      ease: "power2.out",
-    },
-    1.1
-  );
+  .to(".title-inner", {
+    y: 0,
+    duration: 1.1,
+    stagger: 0.1,
+    ease: "power4.out",
+  }, 0.1)
+  .to(".hero-sub", {
+    opacity: 1,
+    duration: 1,
+  }, 0.7);
 
 // ---------- Hero content fades as it scrolls away ----------
-gsap.to(".hero-left", {
+gsap.to(".hero-content", {
   y: 60,
-  opacity: 0.4,
-  ease: "none",
-  scrollTrigger: {
-    trigger: ".hero",
-    start: "top top",
-    end: "bottom top",
-    scrub: true,
-  },
-});
-
-gsap.to(".hero-right", {
-  y: 100,
-  scale: 0.92,
   opacity: 0.4,
   ease: "none",
   scrollTrigger: {
