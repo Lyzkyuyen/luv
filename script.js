@@ -251,115 +251,346 @@ introTl
     duration: 1,
   }, 0.7);
 
-// ---------- Compact music player glass tab + synchronized details ----------
-const musicPlayer = document.querySelector(".n-player");
-const playerMinimizer = document.querySelector(".player-minimizer");
-const compactPlayer = document.querySelector(".player-popover");
-const compactPlayerClose = document.querySelector(".mini-player-close");
+// ---------- Music player ----------
+// One <audio> element drives two views: the glass card in the hero (.n-player) and the
+// compact popover (.player-popover) that the glass tab opens once the card has scrolled away.
+// Everything in the markup is wired up through data-p="..." attributes.
+(() => {
+  // ===== YOUR SONG(S): add more objects to make a playlist =====
+  const TRACKS = [
+    {
+      title: "2 Become 1",
+      artist: "Spice Girls",
+      src: "./assets/el/2 Become 1.mp3", // capitals + spaces must match the file name exactly
+      cover: "./assets/el/2 become 1.jpg",
+    },
+  ];
+  const START_VOLUME = 0.72;
+  // =============================================================
 
-if (musicPlayer && playerMinimizer && compactPlayer) {
-  const mainTitle = musicPlayer.querySelector(".n-player-title");
-  const mainArtist = musicPlayer.querySelector(".n-player-artist");
-  const mainArtwork = musicPlayer.querySelector(".n-player-cover");
-  const mainProgress = musicPlayer.querySelector(".n-player-scrub .n-slider");
-  const mainTimes = musicPlayer.querySelectorAll(".n-player-times span");
+  const card = document.querySelector(".n-player");
+  const tab = document.querySelector(".player-minimizer");
+  const popover = document.querySelector(".player-popover");
+  if (!card || !tab || !popover || !TRACKS.length) return;
 
-  const compactTitle = compactPlayer.querySelector(".mini-player-title");
-  const compactArtist = compactPlayer.querySelector(".mini-player-artist");
-  const compactArtwork = compactPlayer.querySelector(".mini-player-art");
-  const compactProgress = compactPlayer.querySelector(".mini-player-progress");
-  const compactTimes = compactPlayer.querySelectorAll(".mini-player-times span");
+  const closeBtn = popover.querySelector(".mini-player-close");
+  const views = [card, popover];
+  const all = (name) =>
+    views.flatMap((v) => [...v.querySelectorAll(`[data-p="${name}"]`)]);
 
-  function syncCompactPlayer() {
-    if (mainTitle && compactTitle) compactTitle.textContent = mainTitle.textContent.trim();
-    if (mainArtist && compactArtist) compactArtist.textContent = mainArtist.textContent.trim();
+  const ui = {
+    title: all("title"),
+    artist: all("artist"),
+    play: all("play"),
+    prev: all("prev"),
+    next: all("next"),
+    seek: all("seek"),
+    volume: all("volume"),
+    mute: all("mute"),
+    elapsed: all("elapsed"),
+    duration: all("duration"),
+  };
 
-    if (mainArtwork && compactArtwork) {
-      const artwork = getComputedStyle(mainArtwork).backgroundImage;
-      compactArtwork.style.backgroundImage = artwork;
-      compactArtwork.setAttribute(
-        "aria-label",
-        mainArtwork.getAttribute("aria-label") || "Current album artwork"
-      );
+  // iOS ignores audio.volume (hardware buttons only), so hide the volume slider there.
+  (() => {
+    const probe = new Audio();
+    probe.volume = 0.5;
+    if (probe.volume !== 0.5) document.documentElement.classList.add("no-volume");
+  })();
+
+  const audio = new Audio();
+  audio.preload = "metadata";
+  audio.volume = START_VOLUME;
+
+  let index = 0;
+  let seeking = false; // true while a progress slider is being dragged
+  let seekRatio = 0;
+  let raf = 0;
+  const shown = { elapsed: "", duration: "" };
+
+  const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+  const toURL = (path) => new URL(path, document.baseURI).href; // also encodes the spaces
+  const getDuration = () => (Number.isFinite(audio.duration) ? audio.duration : 0);
+  const fmt = (s) => {
+    if (!Number.isFinite(s) || s < 0) s = 0;
+    return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  };
+
+  // ---------- Rendering (both views are always updated together) ----------
+  function renderProgress() {
+    const dur = getDuration();
+    const cur = seeking ? seekRatio * dur : audio.currentTime;
+    const ratio = dur ? clamp(cur / dur, 0, 1) : 0;
+    const pct = `${(ratio * 100).toFixed(2)}%`;
+    ui.seek.forEach((el) => el.style.setProperty("--val", pct));
+
+    const a = fmt(cur);
+    const b = fmt(dur);
+    if (a !== shown.elapsed) {
+      shown.elapsed = a;
+      ui.elapsed.forEach((el) => (el.textContent = a));
+      ui.seek.forEach((el) => {
+        el.setAttribute("aria-valuenow", String(Math.round(ratio * 100)));
+        el.setAttribute("aria-valuetext", `${a} of ${b}`);
+      });
     }
-
-    if (mainProgress && compactProgress) {
-      const progress = getComputedStyle(mainProgress).getPropertyValue("--val").trim();
-      if (progress) compactProgress.style.setProperty("--val", progress);
+    if (b !== shown.duration) {
+      shown.duration = b;
+      ui.duration.forEach((el) => (el.textContent = b));
     }
+  }
 
-    mainTimes.forEach((time, index) => {
-      if (compactTimes[index]) compactTimes[index].textContent = time.textContent.trim();
+  function renderState() {
+    const playing = !audio.paused;
+    ui.play.forEach((btn) => {
+      btn.classList.toggle("is-playing", playing);
+      btn.setAttribute("aria-label", playing ? "Pause" : "Play");
+    });
+    tab.classList.toggle("is-playing", playing);
+  }
+
+  function renderVolume() {
+    const v = audio.muted ? 0 : audio.volume;
+    ui.volume.forEach((el) => {
+      el.style.setProperty("--val", `${v * 100}%`);
+      el.setAttribute("aria-valuenow", String(Math.round(v * 100)));
+    });
+    ui.mute.forEach((btn) => {
+      btn.classList.toggle("is-muted", v === 0);
+      btn.setAttribute("aria-label", v === 0 ? "Unmute" : "Mute");
     });
   }
 
-  function setCompactPlayerOpen(open, returnFocus = false) {
-    syncCompactPlayer();
-    compactPlayer.classList.toggle("is-open", open);
-    compactPlayer.setAttribute("aria-hidden", String(!open));
-    compactPlayer.inert = !open;
-    playerMinimizer.classList.toggle("is-open", open);
-    playerMinimizer.setAttribute("aria-expanded", String(open));
+  // Smooth progress while playing (timeupdate alone only fires ~4x per second).
+  function tick() {
+    renderProgress();
+    raf = audio.paused ? 0 : requestAnimationFrame(tick);
+  }
+
+  // ---------- Playback ----------
+  function play() {
+    const p = audio.play();
+    if (p && p.catch) {
+      p.catch((err) => {
+        if (err.name !== "AbortError") console.warn("Music player: couldn't play.", err);
+      });
+    }
+  }
+  const pause = () => audio.pause();
+  const toggle = () => (audio.paused ? play() : pause());
+
+  function loadTrack(i, { autoplay = false } = {}) {
+    index = (i + TRACKS.length) % TRACKS.length;
+    const t = TRACKS[index];
+
+    audio.src = toURL(t.src);
+    document.documentElement.style.setProperty("--player-cover", `url("${toURL(t.cover)}")`);
+    ui.title.forEach((el) => (el.textContent = t.title));
+    ui.artist.forEach((el) => (el.textContent = t.artist));
+
+    shown.elapsed = shown.duration = "";
+    renderProgress();
+    renderState();
+    updateMediaSession(t);
+    if (autoplay) play();
+  }
+
+  function prev() {
+    // Like every player: restart the song, or go back a track if you're right at the start.
+    if (audio.currentTime > 3 || TRACKS.length === 1) {
+      audio.currentTime = 0;
+      return;
+    }
+    loadTrack(index - 1, { autoplay: !audio.paused });
+  }
+
+  function next(fromEnd = false) {
+    const keepPlaying = fromEnd || !audio.paused;
+    if (TRACKS.length === 1) {
+      audio.currentTime = 0; // a single song just starts over
+      if (keepPlaying) play();
+      return;
+    }
+    loadTrack(index + 1, { autoplay: keepPlaying });
+  }
+
+  function seekTo(ratio) {
+    const dur = getDuration();
+    if (dur) audio.currentTime = clamp(ratio, 0, 1) * dur;
+  }
+
+  // ---------- Sliders (progress + volume): drag, click, touch, keyboard ----------
+  function bindSlider(el, { onDrag, onCommit, onNudge }) {
+    let dragging = false;
+
+    const ratioAt = (e) => {
+      const r = el.getBoundingClientRect();
+      return r.width ? clamp((e.clientX - r.left) / r.width, 0, 1) : 0;
+    };
+
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add("is-dragging");
+      onDrag(ratioAt(e));
+      e.preventDefault();
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (dragging) onDrag(ratioAt(e));
+    });
+
+    const finish = (e, commit) => {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove("is-dragging");
+      onCommit(ratioAt(e), commit);
+    };
+    el.addEventListener("pointerup", (e) => finish(e, true));
+    el.addEventListener("pointercancel", (e) => finish(e, false));
+
+    el.addEventListener("keydown", (e) => {
+      const dir =
+        e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 :
+        e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
+      if (!dir) return;
+      onNudge(dir);
+      e.preventDefault();
+    });
+  }
+
+  ui.seek.forEach((el) =>
+    bindSlider(el, {
+      onDrag: (r) => {
+        seeking = true;
+        seekRatio = r;
+        renderProgress();
+      },
+      onCommit: (r, ok) => {
+        seeking = false;
+        if (ok) seekTo(r);
+        renderProgress();
+      },
+      onNudge: (dir) => {
+        audio.currentTime = clamp(audio.currentTime + dir * 5, 0, getDuration());
+      },
+    })
+  );
+
+  ui.volume.forEach((el) =>
+    bindSlider(el, {
+      onDrag: (r) => {
+        audio.muted = false;
+        audio.volume = r;
+      },
+      onCommit: () => {},
+      onNudge: (dir) => {
+        audio.muted = false;
+        audio.volume = clamp(audio.volume + dir * 0.05, 0, 1);
+      },
+    })
+  );
+
+  // ---------- Buttons ----------
+  ui.play.forEach((b) => b.addEventListener("click", toggle));
+  ui.prev.forEach((b) => b.addEventListener("click", () => prev()));
+  ui.next.forEach((b) => b.addEventListener("click", () => next()));
+  ui.mute.forEach((b) =>
+    b.addEventListener("click", () => {
+      if (audio.muted || audio.volume === 0) {
+        audio.muted = false;
+        if (audio.volume === 0) audio.volume = 0.7;
+      } else {
+        audio.muted = true;
+      }
+    })
+  );
+
+  // ---------- Audio events ----------
+  audio.addEventListener("play", () => {
+    renderState();
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
+  });
+  audio.addEventListener("pause", () => {
+    renderState();
+    renderProgress();
+  });
+  audio.addEventListener("timeupdate", renderProgress);
+  audio.addEventListener("loadedmetadata", renderProgress);
+  audio.addEventListener("durationchange", renderProgress);
+  audio.addEventListener("volumechange", renderVolume);
+  audio.addEventListener("ended", () => next(true));
+  audio.addEventListener("error", () =>
+    console.error("Music player: couldn't load", audio.src, "(check the path, spaces and capital letters)")
+  );
+
+  // ---------- Lock-screen / headphone / keyboard media keys ----------
+  function updateMediaSession(t) {
+    if (!("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: t.title,
+      artist: t.artist,
+      artwork: [{ src: toURL(t.cover) }],
+    });
+  }
+
+  if ("mediaSession" in navigator) {
+    const handle = (action, fn) => {
+      try { navigator.mediaSession.setActionHandler(action, fn); } catch (_) {}
+    };
+    handle("play", play);
+    handle("pause", pause);
+    handle("previoustrack", () => prev());
+    handle("nexttrack", () => next());
+    handle("seekto", (d) => {
+      if (d.seekTime != null) audio.currentTime = d.seekTime;
+    });
+  }
+
+  // ---------- Compact popover + glass tab ----------
+  const isOpen = () => popover.classList.contains("is-open");
+
+  function setOpen(open, returnFocus = false) {
+    popover.classList.toggle("is-open", open);
+    popover.setAttribute("aria-hidden", String(!open));
+    popover.inert = !open;
+    tab.classList.toggle("is-open", open);
+    tab.setAttribute("aria-expanded", String(open));
 
     if (open) {
-      requestAnimationFrame(() => compactPlayerClose?.focus({ preventScroll: true }));
+      requestAnimationFrame(() => closeBtn?.focus({ preventScroll: true }));
     } else if (returnFocus) {
-      playerMinimizer.focus({ preventScroll: true });
+      tab.focus({ preventScroll: true });
     }
   }
 
-  playerMinimizer.addEventListener("click", () => {
-    setCompactPlayerOpen(!compactPlayer.classList.contains("is-open"));
-  });
-  compactPlayerClose?.addEventListener("click", () => setCompactPlayerOpen(false, true));
+  tab.addEventListener("click", () => setOpen(!isOpen()));
+  closeBtn?.addEventListener("click", () => setOpen(false, true));
 
-  document.addEventListener("pointerdown", (event) => {
-    if (
-      compactPlayer.classList.contains("is-open") &&
-      !compactPlayer.contains(event.target) &&
-      !playerMinimizer.contains(event.target)
-    ) {
-      setCompactPlayerOpen(false);
-    }
+  document.addEventListener("pointerdown", (e) => {
+    if (isOpen() && !popover.contains(e.target) && !tab.contains(e.target)) setOpen(false);
   });
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && compactPlayer.classList.contains("is-open")) {
-      setCompactPlayerOpen(false, true);
-    }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen()) setOpen(false, true);
   });
 
-  // Keep displayed title, artist, artwork, and progress in sync if the main
-  // player is updated later (for example, when a track is selected).
-  if ("MutationObserver" in window) {
-    const playerContentObserver = new MutationObserver(syncCompactPlayer);
-    [mainTitle, mainArtist, mainArtwork, mainProgress, ...mainTimes]
-      .filter(Boolean)
-      .forEach((element) => {
-        playerContentObserver.observe(element, {
-          attributes: true,
-          childList: true,
-          characterData: true,
-          subtree: true,
-        });
-      });
-  }
-
-  syncCompactPlayer();
-
+  // The tab only shows once the hero card has scrolled out of view.
   if ("IntersectionObserver" in window) {
-    const playerVisibilityObserver = new IntersectionObserver(([entry]) => {
-      const playerIsOffscreen = !entry.isIntersecting;
-      playerMinimizer.classList.toggle("is-visible", playerIsOffscreen);
-
-      if (!playerIsOffscreen && compactPlayer.classList.contains("is-open")) {
-        setCompactPlayerOpen(false);
-      }
-    }, { threshold: 0 });
-
-    playerVisibilityObserver.observe(musicPlayer);
+    new IntersectionObserver(([entry]) => {
+      const offscreen = !entry.isIntersecting;
+      tab.classList.toggle("is-visible", offscreen);
+      if (!offscreen && isOpen()) setOpen(false);
+    }, { threshold: 0 }).observe(card);
   }
-}
+
+  // ---------- Go ----------
+  loadTrack(0);
+  renderVolume();
+})();
+
 // ---------- Hero content fades as it scrolls away ----------
 gsap.to(".hero-content", {
   y: 60,
@@ -398,7 +629,12 @@ if (!reveal) {
   const comp3 = reveal.querySelector(".comp-3");
   const comp4 = reveal.querySelector(".comp-4");
 
-    if (!cover || !comp) {
+  // Only keep selectors that actually exist inside .reveal, so GSAP never
+  // gets asked to animate something that isn't in the HTML.
+  const present = (selectors) =>
+    selectors.filter((s) => reveal.querySelector(s));
+
+  if (!cover || !comp) {
     console.warn("Scroll animation not initialized: .reveal-cover or .reveal-comp is missing.");
   } else {
     let W = cover.clientWidth;
@@ -461,9 +697,6 @@ if (!reveal) {
           .map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`)
           .join(",") +
         ")";
-
-
-      
     }
 
     function fitComp() {
@@ -554,6 +787,8 @@ if (!reveal) {
     });
 
     function showText(selector, at) {
+      if (!reveal.querySelector(`${selector} .in`)) return; // skip lines that aren't in the HTML
+
       scrollTl.fromTo(
         `${selector} .in`,
         {
@@ -675,6 +910,8 @@ if (!reveal) {
     );
 
     function showLine(selector, at) {
+      if (!reveal.querySelector(`${selector} .in`)) return; // skip lines that aren't in the HTML
+
       scrollTl.fromTo(
         `${selector} .in`,
         { yPercent: 110, rotate: 3, opacity: 0, transformOrigin: "0% 100%" },
@@ -707,7 +944,7 @@ if (!reveal) {
 
     scrollTl.to(".bg-e", { opacity: 1, duration: 0.5 }, 13.4);
 
-    // ---- Scene 3: "We're talking about a world where there's ..." ----
+    // ---- Scene 3: "11th of March, we met on ..." ----
     if (comp3) {
       // Small upward settle while the sentence arrives.
       scrollTl.fromTo(
@@ -728,17 +965,15 @@ if (!reveal) {
       scrollTl.to(curveMask, { strokeDashoffset: 0, duration: 1.4, ease: "none" }, 16.1);
     }
 
-    // Stacked "more" lines.
+    // Stacked lines (t3-m1 .. t3-m5 are the ones that exist in the HTML).
     showLine(".t3-m1", 17.0);
     showLine(".t3-m2", 17.3);
     showLine(".t3-m3", 17.6);
     showLine(".t3-m4", 17.9);
     showLine(".t3-m5", 18.2);
 
-    showLine(".t3-of", 18.5);
-
-    // "& more  room for ..." arrive together.
-    showLine(".t3-m6", 18.9);
+    // "&" and the last line arrive together.
+    // (.t3-of and .t3-m6 were removed: they no longer exist in the HTML.)
     showLine(".t3-amp", 18.9);
     showLine(".t3-room", 19.2);
 
@@ -762,15 +997,20 @@ if (!reveal) {
 
     const h1Chars = splitChars(reveal.querySelector(".t4-h1 .hl"));
     const h2Chars = splitChars(reveal.querySelector(".t4-h2 .hl"));
-    gsap.set([...h1Chars, ...h2Chars], { yPercent: 110 });
+    if (h1Chars.length || h2Chars.length) {
+      gsap.set([...h1Chars, ...h2Chars], { yPercent: 110 });
+    }
 
     // Invisible optimisation: once bg-e is fully in, the layers under it can't be
     // seen. Stop drawing them (bg-a also carries a full-screen saturate filter).
-    scrollTl.to(
-      [".bg-a", ".bg-b", ".bg-c", ".bg-d"],
-      { autoAlpha: 0, duration: 0.01, immediateRender: false },
-      14.1
-    );
+    const lowerLayers = present([".bg-a", ".bg-b", ".bg-c", ".bg-d"]);
+    if (lowerLayers.length) {
+      scrollTl.to(
+        lowerLayers,
+        { autoAlpha: 0, duration: 0.01, immediateRender: false },
+        14.1
+      );
+    }
 
     // Scene 3 text fades while the card starts to shrink (same as before, just slower).
     if (comp3) {
@@ -806,7 +1046,7 @@ if (!reveal) {
       scrollTl.to(el, { opacity: 1, duration: FADE }, at);
 
       // Invisible optimisation: once a picture is fully in, stop drawing the one under it.
-      if (beneath[i]) {
+      if (beneath[i] && reveal.querySelector(beneath[i])) {
         scrollTl.to(
           beneath[i],
           { autoAlpha: 0, duration: 0.01, immediateRender: false },
@@ -817,8 +1057,12 @@ if (!reveal) {
 
     // Headline, paragraph, button: same fades as before, just slower. The headline
     // starts as the card nears its end; line 2 follows line 1; copy + button fade in place.
-    scrollTl.to(h1Chars, { yPercent: 0, duration: 1.0, stagger: 0.07 }, 25.2);
-    scrollTl.to(h2Chars, { yPercent: 0, duration: 1.0, stagger: 0.05 }, 26.5);
+    if (h1Chars.length) {
+      scrollTl.to(h1Chars, { yPercent: 0, duration: 1.0, stagger: 0.07 }, 25.2);
+    }
+    if (h2Chars.length) {
+      scrollTl.to(h2Chars, { yPercent: 0, duration: 1.0, stagger: 0.05 }, 26.5);
+    }
     scrollTl.to(".t4-copy", { opacity: 1, duration: 1.0 }, 26.5);
     scrollTl.to(".t4-btn", { opacity: 1, duration: 1.0 }, 27.0);
 
@@ -827,201 +1071,198 @@ if (!reveal) {
   }
 
   // ---------- Next page reveal (curtain / footer-reveal effect) ----------
-// The page itself is fixed underneath (see .page-next in CSS); the section above scrolls
-// away and uncovers it. This scrub only adds the slower "parallax" on the page's content.
-const nextPage = document.querySelector(".page-next");
+  // The page itself is fixed underneath (see .page-next in CSS); the section above scrolls
+  // away and uncovers it. This scrub only adds the slower "parallax" on the page's content.
+  const nextPage = document.querySelector(".page-next");
 
-if (nextPage) {
-  gsap.fromTo(
-    ".page-next-inner",
-    { yPercent: 20 },
-    {
-      yPercent: 0,
-      ease: "none",
-      scrollTrigger: {
-        trigger: nextPage,
-        start: "top bottom", // page starts being uncovered
-        end: "top top",      // page fully uncovered
-        scrub: true,
-        invalidateOnRefresh: true,
-      },
-    }
-  );
-}
-
-// ---------- Proximity-scale star grid on the next page ----------
-(() => {
-  const canvas = document.querySelector(".n-grid");
-  const page = document.querySelector(".page-next");
-  const hole = document.querySelector(".n-portrait"); // the grid keeps this area clear
-  if (!canvas || !page) return;
-  const ctx = canvas.getContext("2d");
-
-  // ---- tweak here ----
-  const SHAPE = "star";     // "star" (4-point sparkle) or "dot"
-  const GAP = 46;           // px between grid points
-  const BASE = 3;           // resting size (radius, px)
-  const MAX_SCALE = 4.5;    // how many times bigger a point gets right under the cursor
-  const REACH = 240;        // px: how far the cursor's influence reaches
-  const REST_ALPHA = 0.22;  // resting opacity
-  // --------------------
-
-  const ptr = { x: -9999, y: -9999, sx: -9999, sy: -9999 }; // raw and smoothed pointer
-  let w = 0, h = 0, dpr = 1, visible = false;
-
-  function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    w = canvas.clientWidth;
-    h = canvas.clientHeight;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
+  if (nextPage) {
+    gsap.fromTo(
+      ".page-next-inner",
+      { yPercent: 20 },
+      {
+        yPercent: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: nextPage,
+          start: "top bottom", // page starts being uncovered
+          end: "top top",      // page fully uncovered
+          scrub: true,
+          invalidateOnRefresh: true,
+        },
+      }
+    );
   }
 
-  function sparkle(x, y, r) {
-    const k = r * 0.28; // waist of the star
-    ctx.beginPath();
-    ctx.moveTo(x, y - r);
-    ctx.quadraticCurveTo(x + k, y - k, x + r, y);
-    ctx.quadraticCurveTo(x + k, y + k, x, y + r);
-    ctx.quadraticCurveTo(x - k, y + k, x - r, y);
-    ctx.quadraticCurveTo(x - k, y - k, x, y - r);
-    ctx.fill();
-  }
+  // ---------- Proximity-scale star grid on the next page ----------
+  (() => {
+    const canvas = document.querySelector(".n-grid");
+    const page = document.querySelector(".page-next");
+    const hole = document.querySelector(".n-portrait"); // the grid keeps this area clear
+    if (!canvas || !page) return;
+    const ctx = canvas.getContext("2d");
 
-  function draw() {
-    if (!w || !h) return;
+    // ---- tweak here ----
+    const SHAPE = "star";     // "star" (4-point sparkle) or "dot"
+    const GAP = 46;           // px between grid points
+    const BASE = 1.5;           // resting size (radius, px)
+    const MAX_SCALE = 4.5;    // how many times bigger a point gets right under the cursor
+    const REACH = 240;        // px: how far the cursor's influence reaches
+    const REST_ALPHA = 0.22;  // resting opacity
+    // --------------------
 
-    // ease the pointer so the scaling glides instead of snapping
-    if (ptr.x < -1000 || ptr.sx < -1000) {
-      ptr.sx = ptr.x;
-      ptr.sy = ptr.y;
-    } else {
-      ptr.sx += (ptr.x - ptr.sx) * 0.2;
-      ptr.sy += (ptr.y - ptr.sy) * 0.2;
+    const ptr = { x: -9999, y: -9999, sx: -9999, sy: -9999 }; // raw and smoothed pointer
+    let w = 0, h = 0, dpr = 1, visible = false;
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
     }
 
-    // pointer and portrait, measured relative to the canvas (it moves during the reveal)
-    const cr = canvas.getBoundingClientRect();
-    const mx = ptr.sx - cr.left;
-    const my = ptr.sy - cr.top;
-    let hx = 0, hy = 0, hrx = 0, hry = 0;
-    if (hole) {
-      const hr = hole.getBoundingClientRect();
-      hx = hr.left - cr.left + hr.width / 2;
-      hy = hr.top - cr.top + hr.height / 2;
-      hrx = hr.width / 2;
-      hry = hr.height / 2;
+    function sparkle(x, y, r) {
+      const k = r * 0.28; // waist of the star
+      ctx.beginPath();
+      ctx.moveTo(x, y - r);
+      ctx.quadraticCurveTo(x + k, y - k, x + r, y);
+      ctx.quadraticCurveTo(x + k, y + k, x, y + r);
+      ctx.quadraticCurveTo(x - k, y + k, x - r, y);
+      ctx.quadraticCurveTo(x - k, y - k, x, y - r);
+      ctx.fill();
     }
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = "#fff";
+    function draw() {
+      if (!w || !h) return;
 
-    const cols = Math.floor(w / GAP);
-    const rows = Math.floor(h / GAP);
-    const ox = (w - (cols - 1) * GAP) / 2;
-    const oy = (h - (rows - 1) * GAP) / 2;
+      // ease the pointer so the scaling glides instead of snapping
+      if (ptr.x < -1000 || ptr.sx < -1000) {
+        ptr.sx = ptr.x;
+        ptr.sy = ptr.y;
+      } else {
+        ptr.sx += (ptr.x - ptr.sx) * 0.2;
+        ptr.sy += (ptr.y - ptr.sy) * 0.2;
+      }
 
-    for (let j = 0; j < rows; j++) {
-      for (let i = 0; i < cols; i++) {
-        const x = ox + i * GAP;
-        const y = oy + j * GAP;
+      // pointer and portrait, measured relative to the canvas (it moves during the reveal)
+      const cr = canvas.getBoundingClientRect();
+      const mx = ptr.sx - cr.left;
+      const my = ptr.sy - cr.top;
+      let hx = 0, hy = 0, hrx = 0, hry = 0;
+      if (hole) {
+        const hr = hole.getBoundingClientRect();
+        hx = hr.left - cr.left + hr.width / 2;
+        hy = hr.top - cr.top + hr.height / 2;
+        hrx = hr.width / 2;
+        hry = hr.height / 2;
+      }
 
-        if (hrx) {
-          const nx = (x - hx) / hrx;
-          const ny = (y - hy) / hry;
-          if (nx * nx + ny * ny < 1) continue; // inside the portrait's oval
-        }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#fff";
 
-        const d = Math.hypot(x - mx, y - my);
-        const t = d < REACH ? 1 - d / REACH : 0;
-        const k = t * t * (3 - 2 * t); // smoothstep falloff
-        const size = BASE * (1 + (MAX_SCALE - 1) * k);
+      const cols = Math.floor(w / GAP);
+      const rows = Math.floor(h / GAP);
+      const ox = (w - (cols - 1) * GAP) / 2;
+      const oy = (h - (rows - 1) * GAP) / 2;
 
-        ctx.globalAlpha = REST_ALPHA + (1 - REST_ALPHA) * k;
-        if (SHAPE === "dot") {
-          ctx.beginPath();
-          ctx.arc(x, y, size, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          sparkle(x, y, size);
+      for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < cols; i++) {
+          const x = ox + i * GAP;
+          const y = oy + j * GAP;
+
+          if (hrx) {
+            const nx = (x - hx) / hrx;
+            const ny = (y - hy) / hry;
+            if (nx * nx + ny * ny < 1) continue; // inside the portrait's oval
+          }
+
+          const d = Math.hypot(x - mx, y - my);
+          const t = d < REACH ? 1 - d / REACH : 0;
+          const k = t * t * (3 - 2 * t); // smoothstep falloff
+          const size = BASE * (1 + (MAX_SCALE - 1) * k);
+
+          ctx.globalAlpha = REST_ALPHA + (1 - REST_ALPHA) * k;
+          if (SHAPE === "dot") {
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            sparkle(x, y, size);
+          }
         }
       }
+      ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = 1;
-  }
 
-  window.addEventListener("pointermove", (e) => {
-    ptr.x = e.clientX;
-    ptr.y = e.clientY;
-  }, { passive: true });
-  document.documentElement.addEventListener("mouseleave", () => {
-    ptr.x = ptr.y = -9999;
-  });
-
-  if ("ResizeObserver" in window) new ResizeObserver(resize).observe(canvas);
-  resize();
-
-  // only draw while the page is actually on screen
-  new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting && !visible) {
-      visible = true;
-      gsap.ticker.add(draw);
-    } else if (!entry.isIntersecting && visible) {
-      visible = false;
-      gsap.ticker.remove(draw);
-    }
-  }).observe(page);
-})();
-
-// ---------- Big stars swell as the cursor gets close (proximity scale) ----------
-(() => {
-  const stars = gsap.utils.toArray(".n-star");
-  const page = document.querySelector(".page-next");
-  if (!stars.length || !page) return;
-
-  // ---- tweak here ----
-  const REST = 0.8;   // resting scale: keep equal to the fallback in the CSS var(--s, 0.8)
-  const MAX = 0.85;   // scale when the cursor is right on a star ("a bit" bigger)
-  const REACH = 1.2;  // how far away it starts to react, in star-radiuses
-  // --------------------
-
-  const toScale = gsap.utils.mapRange(0, 1, REST, MAX); // closeness (0..1) -> scale
-  gsap.set(stars, { "--s": REST });
-
-  let visible = false;
-  new IntersectionObserver(([entry]) => {
-    visible = entry.isIntersecting;
-  }).observe(page);
-
-  window.addEventListener("pointermove", (e) => {
-    if (!visible || e.pointerType === "touch") return;
-
-    stars.forEach((el) => {
-      const r = el.getBoundingClientRect();
-      const radius = (Math.max(el.offsetWidth, el.offsetHeight) * REST) / 2;
-      const d = Math.hypot(
-        e.clientX - (r.left + r.width / 2),
-        e.clientY - (r.top + r.height / 2)
-      );
-      const close = gsap.utils.clamp(0, 1, 1 - d / (radius * REACH));
-      const eased = close * close * (3 - 2 * close); // smoothstep falloff
-
-      gsap.to(el, {
-        "--s": toScale(eased),
-        duration: 0.6,
-        ease: "power3.out",
-        overwrite: "auto",
-      });
+    window.addEventListener("pointermove", (e) => {
+      ptr.x = e.clientX;
+      ptr.y = e.clientY;
+    }, { passive: true });
+    document.documentElement.addEventListener("mouseleave", () => {
+      ptr.x = ptr.y = -9999;
     });
-  }, { passive: true });
 
-  // cursor left the window: settle back to rest
-  document.documentElement.addEventListener("mouseleave", () => {
-    gsap.to(stars, { "--s": REST, duration: 0.8, ease: "power3.out", overwrite: "auto" });
-  });
-})();
+    if ("ResizeObserver" in window) new ResizeObserver(resize).observe(canvas);
+    resize();
 
+    // only draw while the page is actually on screen
+    new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !visible) {
+        visible = true;
+        gsap.ticker.add(draw);
+      } else if (!entry.isIntersecting && visible) {
+        visible = false;
+        gsap.ticker.remove(draw);
+      }
+    }).observe(page);
+  })();
 
+  // ---------- Big stars swell as the cursor gets close (proximity scale) ----------
+  (() => {
+    const stars = gsap.utils.toArray(".n-star");
+    const page = document.querySelector(".page-next");
+    if (!stars.length || !page) return;
 
+    // ---- tweak here ----
+    const REST = 0.8;   // resting scale: keep equal to the fallback in the CSS var(--s, 0.8)
+    const MAX = 0.85;   // scale when the cursor is right on a star ("a bit" bigger)
+    const REACH = 1.2;  // how far away it starts to react, in star-radiuses
+    // --------------------
+
+    const toScale = gsap.utils.mapRange(0, 1, REST, MAX); // closeness (0..1) -> scale
+    gsap.set(stars, { "--s": REST });
+
+    let visible = false;
+    new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+    }).observe(page);
+
+    window.addEventListener("pointermove", (e) => {
+      if (!visible || e.pointerType === "touch") return;
+
+      stars.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        const radius = (Math.max(el.offsetWidth, el.offsetHeight) * REST) / 2;
+        const d = Math.hypot(
+          e.clientX - (r.left + r.width / 2),
+          e.clientY - (r.top + r.height / 2)
+        );
+        const close = gsap.utils.clamp(0, 1, 1 - d / (radius * REACH));
+        const eased = close * close * (3 - 2 * close); // smoothstep falloff
+
+        gsap.to(el, {
+          "--s": toScale(eased),
+          duration: 0.6,
+          ease: "power3.out",
+          overwrite: "auto",
+        });
+      });
+    }, { passive: true });
+
+    // cursor left the window: settle back to rest
+    document.documentElement.addEventListener("mouseleave", () => {
+      gsap.to(stars, { "--s": REST, duration: 0.8, ease: "power3.out", overwrite: "auto" });
+    });
+  })();
 }
