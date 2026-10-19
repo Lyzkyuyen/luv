@@ -131,8 +131,9 @@
     </svg>
   </div>
 
-  <!-- The portrait lives inside the pinned reveal section. script.js rides it on top
-       of the dome's peak, so the dome never overlaps or clips it. -->
+ 
+
+
   <section class="reveal">
      <div class="bg-clip">
       <div class="bg-stack">
@@ -216,7 +217,7 @@
   </section>
 
 
-   <!-- Next page: sits fixed underneath and is uncovered as the section above scrolls away -->
+
     <section class="page-next">
     <div class="page-next-fixed">
       <div class="page-next-inner">
@@ -231,7 +232,9 @@
          </div>
      </div>
 
-  <!-- decorations: siblings of the portrait, so % = % of the stage -->
+
+
+
   <img class="n-deco n-flower-a" src="./assets/el/flower-a.jpg" alt="" aria-hidden="true">
   <img class="n-deco n-lips"     src="./assets/el/lips.jpg"     alt="" aria-hidden="true">
   <img class="n-deco n-flower-b" src="./assets/el/flower-b.jpg" alt="" aria-hidden="true">
@@ -241,13 +244,17 @@
   </section>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <filter id="deepen" color-interpolation-filters="sRGB">
-    <!-- step 1: push the off-white background to pure white -->
+
+
+
     <feComponentTransfer>
       <feFuncR type="linear" slope="1.1"/>
       <feFuncG type="linear" slope="1.1"/>
       <feFuncB type="linear" slope="1.1"/>
     </feComponentTransfer>
-    <!-- step 2: gamma darkens the pale petals; white stays white -->
+
+
+    
     <feComponentTransfer>
       <feFuncR type="gamma" amplitude="1" exponent="2.6" offset="0"/>
       <feFuncG type="gamma" amplitude="1" exponent="2.6" offset="0"/>

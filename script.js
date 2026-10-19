@@ -1,5 +1,3 @@
-// ---------- Fill the portrait text block ----------
-// >>> PASTE YOUR EXISTING `const line = `...`;` BLOCK OVER THE NEXT LINE (unchanged). <<<
 const line = `When you were here, the stars disappear
 Nothing can outshine the dress that you wear
 We should be dancing 'cause girl you look stunning
@@ -59,7 +57,7 @@ if (document.fonts?.ready) document.fonts.ready.then(fillText);
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ---------- Smooth wheel scrolling ----------
+// Smooth scroll
 let lenis;
 
 if (window.Lenis) {
@@ -78,8 +76,7 @@ if (window.Lenis) {
   gsap.ticker.lagSmoothing(0);
 }
 
-// ---------- Custom overlay scrollbar ----------
-// This reproduces the narrow floating thumb from the Savor reference.
+// scrollbar
 (() => {
   const THUMB_HEIGHT = 42;
   const track = document.createElement("div");
@@ -225,7 +222,7 @@ if (window.Lenis) {
   requestAnimationFrame(updateThumb);
 })();
 
-// ---------- Page-load entrance ----------
+// fade in on hero
 const introTl = gsap.timeline({
   defaults: { ease: "power3.out" },
 });
@@ -251,22 +248,20 @@ introTl
     duration: 1,
   }, 0.7);
 
-// ---------- Music player ----------
-// One <audio> element drives two views: the glass card in the hero (.n-player) and the
-// compact popover (.player-popover) that the glass tab opens once the card has scrolled away.
-// Everything in the markup is wired up through data-p="..." attributes.
+// Players
+
 (() => {
-  // ===== YOUR SONG(S): add more objects to make a playlist =====
+ 
   const TRACKS = [
     {
       title: "2 Become 1",
       artist: "Spice Girls",
-      src: "./assets/el/2 Become 1.mp3", // capitals + spaces must match the file name exactly
+      src: "./assets/el/2 Become 1.mp3", 
       cover: "./assets/el/2 become 1.jpg",
     },
   ];
   const START_VOLUME = 0.72;
-  // =============================================================
+  
 
   const card = document.querySelector(".n-player");
   const tab = document.querySelector(".player-minimizer");
@@ -291,7 +286,7 @@ introTl
     duration: all("duration"),
   };
 
-  // iOS ignores audio.volume (hardware buttons only), so hide the volume slider there.
+  
   (() => {
     const probe = new Audio();
     probe.volume = 0.5;
@@ -303,20 +298,20 @@ introTl
   audio.volume = START_VOLUME;
 
   let index = 0;
-  let seeking = false; // true while a progress slider is being dragged
+  let seeking = false; 
   let seekRatio = 0;
   let raf = 0;
   const shown = { elapsed: "", duration: "" };
 
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
-  const toURL = (path) => new URL(path, document.baseURI).href; // also encodes the spaces
+  const toURL = (path) => new URL(path, document.baseURI).href; 
   const getDuration = () => (Number.isFinite(audio.duration) ? audio.duration : 0);
   const fmt = (s) => {
     if (!Number.isFinite(s) || s < 0) s = 0;
     return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
   };
 
-  // ---------- Rendering (both views are always updated together) ----------
+  // Player render manager
   function renderProgress() {
     const dur = getDuration();
     const cur = seeking ? seekRatio * dur : audio.currentTime;
@@ -361,13 +356,13 @@ introTl
     });
   }
 
-  // Smooth progress while playing (timeupdate alone only fires ~4x per second).
+  // Smooth progress while playing 
   function tick() {
     renderProgress();
     raf = audio.paused ? 0 : requestAnimationFrame(tick);
   }
 
-  // ---------- Playback ----------
+  // Playback which doesnt work for now
   function play() {
     const p = audio.play();
     if (p && p.catch) {
@@ -396,7 +391,7 @@ introTl
   }
 
   function prev() {
-    // Like every player: restart the song, or go back a track if you're right at the start.
+    
     if (audio.currentTime > 3 || TRACKS.length === 1) {
       audio.currentTime = 0;
       return;
@@ -407,7 +402,7 @@ introTl
   function next(fromEnd = false) {
     const keepPlaying = fromEnd || !audio.paused;
     if (TRACKS.length === 1) {
-      audio.currentTime = 0; // a single song just starts over
+      audio.currentTime = 0;
       if (keepPlaying) play();
       return;
     }
@@ -419,7 +414,7 @@ introTl
     if (dur) audio.currentTime = clamp(ratio, 0, 1) * dur;
   }
 
-  // ---------- Sliders (progress + volume): drag, click, touch, keyboard ----------
+  // Sliders
   function bindSlider(el, { onDrag, onCommit, onNudge }) {
     let dragging = false;
 
@@ -507,7 +502,7 @@ introTl
     })
   );
 
-  // ---------- Audio events ----------
+  
   audio.addEventListener("play", () => {
     renderState();
     cancelAnimationFrame(raf);
@@ -526,7 +521,7 @@ introTl
     console.error("Music player: couldn't load", audio.src, "(check the path, spaces and capital letters)")
   );
 
-  // ---------- Lock-screen / headphone / keyboard media keys ----------
+  // Buttons
   function updateMediaSession(t) {
     if (!("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -549,7 +544,7 @@ introTl
     });
   }
 
-  // ---------- Compact popover + glass tab ----------
+  // Glasseffect
   const isOpen = () => popover.classList.contains("is-open");
 
   function setOpen(open, returnFocus = false) {
@@ -577,7 +572,7 @@ introTl
     if (e.key === "Escape" && isOpen()) setOpen(false, true);
   });
 
-  // The tab only shows once the hero card has scrolled out of view.
+  // Shows mini when out of view
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(([entry]) => {
       const offscreen = !entry.isIntersecting;
@@ -586,12 +581,12 @@ introTl
     }, { threshold: 0 }).observe(card);
   }
 
-  // ---------- Go ----------
+  
   loadTrack(0);
   renderVolume();
 })();
 
-// ---------- Hero content fades as it scrolls away ----------
+// Hero content fades as it scrolls away 
 gsap.to(".hero-content", {
   y: 60,
   opacity: 0.4,
@@ -604,10 +599,7 @@ gsap.to(".hero-content", {
   },
 });
 
-// ---------- Wave divider ----------
-// Keep the divider in normal document flow so it stays joined to the reveal.
-// Animate the SVG paths themselves, not the wrapper's position.
-
+// Wave divider
 const waveEl = document.querySelector(".wave-divider");
 
 if (waveEl && "IntersectionObserver" in window) {
@@ -616,7 +608,7 @@ if (waveEl && "IntersectionObserver" in window) {
   }).observe(waveEl);
 }
 
-// ---------- Bowl / portrait scroll sequence ----------
+
 const reveal = document.querySelector(".reveal");
 
 if (!reveal) {
@@ -629,8 +621,7 @@ if (!reveal) {
   const comp3 = reveal.querySelector(".comp-3");
   const comp4 = reveal.querySelector(".comp-4");
 
-  // Only keep selectors that actually exist inside .reveal, so GSAP never
-  // gets asked to animate something that isn't in the HTML.
+  
   const present = (selectors) =>
     selectors.filter((s) => reveal.querySelector(s));
 
@@ -650,7 +641,7 @@ if (!reveal) {
     const DROP = 0.05;
     const PUSH = 0.04;
 
-    // h < 0 = arch; h > 0 = hanging bowl.
+    // h < 0 = arch; h > 0 = hanging bowl
     const START_SHAPE = {
       yE: 1 + DROP + PUSH,
       h: -0.47,
@@ -705,7 +696,7 @@ if (!reveal) {
       });
     }
 
-    // Prepare the curve so the stroke draws from its start to its endpoint.
+    
     if (arc) {
       const arcLength = arc.getTotalLength();
 
@@ -716,7 +707,7 @@ if (!reveal) {
       });
     }
 
-    // Bring the arch into position before the pinned sequence begins.
+    
     const entranceTrigger = () => ({
       trigger: ".reveal",
       start: "top bottom",
@@ -725,7 +716,7 @@ if (!reveal) {
       invalidateOnRefresh: true,
     });
 
-    // Position and height: unchanged, linear.
+    
     gsap.fromTo(
       shape,
       { yE: 1.15, h: -0.43 },
@@ -738,7 +729,7 @@ if (!reveal) {
       }
     );
 
-    // Width: starts narrow and opens up as the dome rises.
+    // Width: starts narrow and opens up as the dome rises
     gsap.fromTo(
       shape,
       { rx: 0.16 },
@@ -805,7 +796,7 @@ if (!reveal) {
       );
     }
 
-    // Arch rises, turns into a bowl, then clears away.
+    // Arch rises, turns into a bowl, then clears away
     scrollTl
       .fromTo(
         shape,
@@ -849,7 +840,7 @@ if (!reveal) {
       0
     );
 
-    // Text and horizontal rule.
+    // Text and horizontal rule
     showText(".t-from", 3.3);
 
     scrollTl.fromTo(
@@ -867,7 +858,7 @@ if (!reveal) {
 
     showText(".t-to", 4.22);
 
-    // Draw the curve progressively from its start to its endpoint.
+    // Draw the curve progressively from its start to its endpoint
     if (arc) {
       scrollTl.to(
         arc,
@@ -896,9 +887,7 @@ if (!reveal) {
       6.46
     );
 
-    // ---- Scene 2: first composition scrolls away, "Without ..." takes over ----
-
-    // Rises at roughly scroll speed (1 timeline unit ≈ 0.156 viewport heights of scroll).
+    
     scrollTl.to(
       comp,
       {
@@ -933,7 +922,7 @@ if (!reveal) {
     showLine(".t2-l4", 11.8);
     showLine(".t2-l5", 12.1);
 
-    // ---- Comp 2 now exits (rises at scroll speed) as the new background arrives ----
+   
     if (comp2) {
       scrollTl.to(
         comp2,
@@ -944,9 +933,9 @@ if (!reveal) {
 
     scrollTl.to(".bg-e", { opacity: 1, duration: 0.5 }, 13.4);
 
-    // ---- Scene 3: "11th of March, we met on ..." ----
+    // Scene 3: "11th of March, we met on ..." 
     if (comp3) {
-      // Small upward settle while the sentence arrives.
+      // Small upward settle while the sentence arrives
       scrollTl.fromTo(
         comp3,
         { y: () => innerHeight * 0.08 },
@@ -957,7 +946,7 @@ if (!reveal) {
 
     showLine(".t3-lead", 15.6);
 
-    // Dashed curve draws in after the sentence lands.
+    
     const curveMask = reveal.querySelector(".curve-mask");
     if (curveMask) {
       const curveLen = curveMask.getTotalLength();
@@ -965,7 +954,7 @@ if (!reveal) {
       scrollTl.to(curveMask, { strokeDashoffset: 0, duration: 1.4, ease: "none" }, 16.1);
     }
 
-    // Stacked lines (t3-m1 .. t3-m5 are the ones that exist in the HTML).
+    // Stacked lines (t3-m1 .. t3-m5 are the ones that exist in the HTML)
     showLine(".t3-m1", 17.0);
     showLine(".t3-m2", 17.3);
     showLine(".t3-m3", 17.6);
@@ -977,11 +966,11 @@ if (!reveal) {
     showLine(".t3-amp", 18.9);
     showLine(".t3-room", 19.2);
 
-    // ---- Scene 4: background shrinks into a card, "Inspired by ..." arrives ----
+    // Scene 4: background shrinks into a card, "Inspired by ..." 
 
     const TOTAL = 30; // keep in sync with `end` above (TOTAL x 15.625%)
 
-    // Split a headline into letters so they can rise one after another.
+    // Split a headline into letters so they can rise one after another
     function splitChars(el) {
       if (!el) return [];
       const text = el.textContent;
@@ -1002,7 +991,7 @@ if (!reveal) {
     }
 
     // Invisible optimisation: once bg-e is fully in, the layers under it can't be
-    // seen. Stop drawing them (bg-a also carries a full-screen saturate filter).
+    // seen. Stop drawing them (bg-a also carries a full-screen saturate filter)
     const lowerLayers = present([".bg-a", ".bg-b", ".bg-c", ".bg-d"]);
     if (lowerLayers.length) {
       scrollTl.to(
@@ -1012,12 +1001,12 @@ if (!reveal) {
       );
     }
 
-    // Scene 3 text fades while the card starts to shrink (same as before, just slower).
+    // Scene 3 text fades while the card starts to shrink (same as before, just slower)
     if (comp3) {
       scrollTl.to(comp3, { opacity: 0, duration: 1.4, ease: "none" }, 20.0);
     }
 
-    // The card: original technique and numbers, only stretched over more scroll.
+    // The card: original technique and numbers, only stretched over more scroll
     const SHRINK_AT = 19.9;
     const SHRINK_DUR = 5.6; // was 3.6
 
@@ -1036,7 +1025,7 @@ if (!reveal) {
       SHRINK_AT
     );
 
-    // Pictures crossfade inside the shrinking card, evenly spaced.
+    // Pictures crossfade inside the shrinking card, evenly spaced
     const FADE = 1.0;
     const seqStarts = [20.8, 21.8, 22.8, 23.8, 24.8];
     const beneath = [".bg-e", ".bg-f", ".bg-g", ".bg-h", ".bg-i"]; // layer each picture covers
@@ -1045,7 +1034,7 @@ if (!reveal) {
       const at = seqStarts[i] ?? 24.8;
       scrollTl.to(el, { opacity: 1, duration: FADE }, at);
 
-      // Invisible optimisation: once a picture is fully in, stop drawing the one under it.
+      // Invisible optimisation: once a picture is fully in, stop drawing the one under it
       if (beneath[i] && reveal.querySelector(beneath[i])) {
         scrollTl.to(
           beneath[i],
@@ -1056,7 +1045,7 @@ if (!reveal) {
     });
 
     // Headline, paragraph, button: same fades as before, just slower. The headline
-    // starts as the card nears its end; line 2 follows line 1; copy + button fade in place.
+    // starts as the card nears its end; line 2 follows line 1; copy + button fade in place
     if (h1Chars.length) {
       scrollTl.to(h1Chars, { yPercent: 0, duration: 1.0, stagger: 0.07 }, 25.2);
     }
@@ -1093,7 +1082,7 @@ if (!reveal) {
     );
   }
 
-  // ---------- Proximity-scale star grid on the next page ----------
+  // Star grid
   (() => {
     const canvas = document.querySelector(".n-grid");
     const page = document.querySelector(".page-next");
